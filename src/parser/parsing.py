@@ -12,16 +12,19 @@ class Map(BaseModel):
 
 class Hub():
     def __init__(self, name: str, x: int, y: int):
-        self.name = str(name)
-        self.x = int(x)
-        self.y = int(y)
-        self.metadata = {
-            "zone_type": "normal",
-            "color": "None",
-            "max_drones": 1
-        }
+        try:
+            self.name = str(name)
+            self.x = int(x)
+            self.y = int(y)
+            self.metadata = {
+                "zone_type": "normal",
+                "color": "None",
+                "max_drones": 1
+            }
+        except ValueError:
+            raise ValueError("Invalid hub informations")
 
-    def add_data(self, data: str, value: str):
+    def add_metadata(self, data: str, value: str):
         if data.lower() == "zone_type":
             if value.lower() not in ["normal", "blocked", "restricted", "priority"]:
                 raise ValueError("Invalid zone type")
@@ -39,5 +42,4 @@ class Hub():
             raise ValueError("Invalid data type")
 
 
-t = Hub("zone1", 0, 8)
 
