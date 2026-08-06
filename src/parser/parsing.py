@@ -58,46 +58,71 @@ class Parse():
     }
 
     @staticmethod
-    def open_and_read(file: str):
+    def read_line(file: str):
         try:
             f = open(file)
             for line in f:
                 if "#" in line:
                     continue
-                if "nb_drones" in line:
+                if "\n" in line and len(line) == 1:
+                    continue
+                elif "nb_drones" in line:
                     if Parse.param_state["nb_drones"] == 0:
                         Parse.nb_drones = [int(n) for n in line.split() if n.isdigit()][0]
                         Parse.param_state["nb_drones"] = 1
-                        print(Parse.nb_drones)
                     else:
                         raise ValueError("Map file not conform, nb_drones doublon")
-                if "start_hub" in line.lower():
+                elif "start_hub" in line.lower():
                     if Parse.param_state["start_hub"] == 0:
                         coord = [int(n) for n in line.split() if n.isdigit()]
                         if len(coord) != 2:
                             raise ValueError("Map file not conform, start_hub error")
                         Parse.start_hub = coord[0], coord[1]
-                        Parse.hubs.append(line)
+                        Parse.hubs.append(line.strip('\n').split())
+                        Parse.param_state["start_hub"] = 1
                     else:
                         raise ValueError("Map file not conform, start_hub doublon")
-                if "end_hub" in line.lower():
+                elif "end_hub" in line.lower():
                     if Parse.param_state["end_hub"] == 0:
                         coord = [int(n) for n in line.split() if n.isdigit()]
                         if len(coord) != 2:
                             raise ValueError("Map file not conform, end_hub error")
                         Parse.end_hub = coord[0], coord[1]
-                        Parse.hubs.append(line)
+                        Parse.hubs.append(line.strip('\n').split())
+                        Parse.param_state["end_hub"] = 1
                     else:
                         raise ValueError("Map file not conform, end_hub doublon")
-                if "hub" in line.lower():
-                    Parse.hubs.append(line.split(' \n'))
-
+                elif Parse.parse_name(line.lower()) == "hub":
+                    Parse.hubs.append(line.strip('\n').split())
+                elif Parse.parse_name(line.lower()) == "connection":
+                    Parse.connection.append(line.strip('\n').split())
+                else:
+                    raise ValueError("Error format")
         except FileNotFoundError:
             raise FileNotFoundError("File does not exist")
+        except ValueError as e:
+            print(e)
+
+    @staticmethod
+    def parse_name(line: str):
+        name: str = ""
+        for i in line.strip():
+            if i == ":":
+                return name.strip(" ")
+            name += i
+        return ""
+
+    @staticmethod
+    def is_valid_line(line: str):
+        name = Parse.parse_name(line)
+        if len(line.strip(name)):
+            return True
+        return False
 
 
-Parse.open_and_read("../../maps/easy/01_linear_path.txt")
+Parse.read_line("../../maps/easy/01_linear_path.txt")
 print(Parse.nb_drones)
 print(Parse.start_hub)
 print(Parse.end_hub)
 print(Parse.hubs)
+print(Parse.connection)
