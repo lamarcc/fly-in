@@ -66,35 +66,31 @@ class Parse():
                     continue
                 if "\n" in line and len(line) == 1:
                     continue
-                elif "nb_drones" in line:
+                elif line.split(": ")[0] == "nb_drones":
                     if Parse.param_state["nb_drones"] == 0:
-                        Parse.nb_drones = [int(n) for n in line.split() if n.isdigit()][0]
-                        Parse.param_state["nb_drones"] = 1
+                        line = line.split()
+                        if len(line) != 2:
+                            raise ValueError("Error nb_drones line")
+                        try:
+                            Parse.nb_drones = int(line[1])
+                            Parse.param_state["nb_drones"] = 1
+                        except ValueError:
+                            raise ValueError("Error nb_drones value")
                     else:
                         raise ValueError("Map file not conform, nb_drones doublon")
-                elif "start_hub" in line.lower():
+                elif line.split(": ")[0] == "start_hub":
                     if Parse.param_state["start_hub"] == 0:
-                        coord = [int(n) for n in line.split() if n.isdigit()]
-                        if len(coord) != 2:
-                            raise ValueError("Map file not conform, start_hub error")
-                        Parse.start_hub = coord[0], coord[1]
-                        Parse.hubs.append(line.strip('\n').split())
-                        Parse.param_state["start_hub"] = 1
+                        Parse.parse_line(line.lower())
                     else:
                         raise ValueError("Map file not conform, start_hub doublon")
-                elif "end_hub" in line.lower():
+                elif line.split(": ")[0] == "end_hub":
                     if Parse.param_state["end_hub"] == 0:
-                        coord = [int(n) for n in line.split() if n.isdigit()]
-                        if len(coord) != 2:
-                            raise ValueError("Map file not conform, end_hub error")
-                        Parse.end_hub = coord[0], coord[1]
-                        Parse.hubs.append(line.strip('\n').split())
-                        Parse.param_state["end_hub"] = 1
+                        Parse.parse_line(line.lower())
                     else:
                         raise ValueError("Map file not conform, end_hub doublon")
-                elif Parse.parse_name(line.lower()) == "hub":
+                elif line.split(": ")[0] == "hub":
                     Parse.hubs.append(line.strip('\n').split())
-                elif Parse.parse_name(line.lower()) == "connection":
+                elif line.split(": ")[0] == "connection":
                     Parse.connection.append(line.strip('\n').split())
                 else:
                     raise ValueError("Error format")
@@ -113,16 +109,41 @@ class Parse():
         return ""
 
     @staticmethod
-    def is_valid_line(line: str):
-        name = Parse.parse_name(line)
-        if len(line.strip(name)):
-            return True
-        return False
+    def parse_line(line: str):
+        default_base = {"name": "undefined", "pos_x": "undefined", "pos_y": "undefined"}
+        final = ""
+        dict = {}
+        metadata = {}
+        cpy = 0
+        i = 0
+        for c in line:
+            if c == ":":
+                cpy = 1
+                continue
+            if c == "[":
+                dict = {key: value for key, value in zip(["name", "pos_x", "pos_y"], final.split())}
+                metadata = Parse.parse_metada(line[i:].strip())
+                return {**default_base, **dict}, metadata
+            if cpy == 1:
+                final += c
+            i += 1
+        dict = {key: value for key, value in zip(["name", "pos_x", "pos_y"], final.split())}
+        return {**default_base, **dict}, None
 
+    @staticmethod
+    def parse_metada(line):
+        default = {"zone": "normal", "max_drones": "1", "color": "grey"}
+        line = [i.split("=") for i in line.strip("[]").split()]
+        final = {key: value for key, value in line}
+        return {**default, **final}
 
-Parse.read_line("../../maps/easy/01_linear_path.txt")
-print(Parse.nb_drones)
-print(Parse.start_hub)
-print(Parse.end_hub)
-print(Parse.hubs)
-print(Parse.connection)
+# Parse.read_line("../../maps/easy/01_linear_path.txt")
+# print(Parse.nb_drones)
+# print(Parse.start_hub)
+# print(Parse.end_hub)
+# print(Parse.hubs)
+# print(Parse.connection)
+print(Parse.parse_line("hub: roof13 4"))
+print(Parse.parse_line("hub: roof2 6 2 [zone=normal]"))
+print(Parse.parse_line("hub: obstacleX -5 -5 [zone=blocked]"))
+print(Parse.parse_line("hub: corridorA 4 3 [zone=priority color=green max_drones=2]"))
