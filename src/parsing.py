@@ -45,8 +45,8 @@ class Hub():
 
 class Parse():
     nb_drones = 0
-    start_hub = (0, 0)
-    end_hub = (0, 0)
+    start_hub = {}
+    end_hub = {}
     hubs = []
     hub_info = []
     connection = []
@@ -80,16 +80,18 @@ class Parse():
                         raise ValueError("Map file not conform, nb_drones doublon")
                 elif line.split(": ")[0] == "start_hub":
                     if Parse.param_state["start_hub"] == 0:
-                        Parse.parse_line(line.lower())
+                        Parse.start_hub = Parse.parse_hub(line.lower())
+                        Parse.param_state["start_hub"] = 1
                     else:
                         raise ValueError("Map file not conform, start_hub doublon")
                 elif line.split(": ")[0] == "end_hub":
                     if Parse.param_state["end_hub"] == 0:
-                        Parse.parse_line(line.lower())
+                        Parse.end_hub = Parse.parse_hub(line.lower())
+                        Parse.param_state["end_hub"] = 1
                     else:
                         raise ValueError("Map file not conform, end_hub doublon")
                 elif line.split(": ")[0] == "hub":
-                    Parse.hubs.append(line.strip('\n').split())
+                    Parse.hubs.append(Parse.parse_hub(line.strip('\n')))
                 elif line.split(": ")[0] == "connection":
                     Parse.connection.append(line.strip('\n').split())
                 else:
@@ -109,41 +111,44 @@ class Parse():
         return ""
 
     @staticmethod
-    def parse_line(line: str):
-        default_base = {"name": "undefined", "pos_x": "undefined", "pos_y": "undefined"}
-        final = ""
-        dict = {}
-        metadata = {}
-        cpy = 0
+    def parse_hub(line: str):
+        default_info = {"name": "undefined", "pos_x": "undefined", "pos_y": "undefined"}
+        default_metadata = {"zone": "normal", "max_drones": "1", "color": "grey"}
+        hub_info = {}
+        tmp_line = ""
+        cpy_state = 0
         i = 0
         for c in line:
             if c == ":":
-                cpy = 1
+                cpy_state = 1
                 continue
             if c == "[":
-                dict = {key: value for key, value in zip(["name", "pos_x", "pos_y"], final.split())}
-                metadata = Parse.parse_metada(line[i:].strip())
-                return {**default_base, **dict}, metadata
-            if cpy == 1:
-                final += c
+                hub_info = {key: value for key, value in zip(["name", "pos_x", "pos_y"], tmp_line.split())}
+                metadata = Parse.parse_metadata(line[i:].strip(), default_metadata)
+                return {**default_info, **hub_info}, metadata
+            if cpy_state == 1:
+                tmp_line += c
             i += 1
-        dict = {key: value for key, value in zip(["name", "pos_x", "pos_y"], final.split())}
-        return {**default_base, **dict}, None
+        hub_info = {key: value for key, value in zip(["name", "pos_x", "pos_y"], tmp_line.split())}
+        return {**default_info, **hub_info}, default_metadata
 
     @staticmethod
-    def parse_metada(line):
-        default = {"zone": "normal", "max_drones": "1", "color": "grey"}
+    def parse_metadata(line, default_metadata):
         line = [i.split("=") for i in line.strip("[]").split()]
-        final = {key: value for key, value in line}
-        return {**default, **final}
+        new_metadata = {key: value for key, value in line}
+        return {**default_metadata, **new_metadata}
 
-# Parse.read_line("../../maps/easy/01_linear_path.txt")
-# print(Parse.nb_drones)
-# print(Parse.start_hub)
-# print(Parse.end_hub)
-# print(Parse.hubs)
-# print(Parse.connection)
-print(Parse.parse_line("hub: roof13 4"))
-print(Parse.parse_line("hub: roof2 6 2 [zone=normal]"))
-print(Parse.parse_line("hub: obstacleX -5 -5 [zone=blocked]"))
-print(Parse.parse_line("hub: corridorA 4 3 [zone=priority color=green max_drones=2]"))
+    @staticmethod
+    def parse_connection(line):
+
+
+Parse.read_line("../maps/easy/01_linear_path.txt")
+print(Parse.nb_drones)
+print(Parse.start_hub)
+print(Parse.end_hub)
+print(Parse.hubs)
+print(Parse.connection)
+# print(Parse.parse_hub("hub: roof13 4"))
+# print(Parse.parse_hub("hub: roof2 6 2 [zone=normal]"))
+# print(Parse.parse_hub("hub: obstacleX -5 -5 [zone=blocked]"))
+# print(Parse.parse_hub("hub: corridorA 4 3 [zone=priority color=green max_drones=2]"))
