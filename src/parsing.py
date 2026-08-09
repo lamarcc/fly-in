@@ -48,7 +48,7 @@ class Parse():
     start_hub = {}
     end_hub = {}
     hubs = []
-    hub_info = []
+    hub_name = []
     connection = []
 
     param_state = {
@@ -91,8 +91,13 @@ class Parse():
                     else:
                         raise ValueError("Map file not conform, end_hub doublon")
                 elif line.split(": ")[0] == "hub":
-                    Parse.hubs.append(Parse.parse_hub(line.strip('\n')))
+                    tmp = Parse.parse_hub(line.strip('\n'))
+                    if tmp[0]["pos_x"] == "undefined" or tmp[0]["pos_y"] == "undefined":
+                        raise ValueError(f"Error '{tmp[0]['name']}' undefined position")
+                    Parse.hub_name.append(tmp[0]["name"])
+                    Parse.hubs.append(tmp)
                 elif line.split(": ")[0] == "connection":
+                    tmp = Parse.parse_connection(line)
                     Parse.connection.append(line.strip('\n').split())
                 else:
                     raise ValueError("Error format")
@@ -100,6 +105,7 @@ class Parse():
             raise FileNotFoundError("File does not exist")
         except ValueError as e:
             print(e)
+        Parse.parse_connection(Parse.connection, Parse.hubs)
 
     @staticmethod
     def parse_name(line: str):
@@ -140,6 +146,13 @@ class Parse():
 
     @staticmethod
     def parse_connection(line):
+        connection = []
+        # hub_name = [name["name"] for name, _ in hub]
+        for c in line:
+
+        
+
+
 
 
 Parse.read_line("../maps/easy/01_linear_path.txt")
