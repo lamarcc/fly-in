@@ -29,8 +29,7 @@ class Parse():
                 key, info = line.split(":", 1)
                 key = key.strip()
                 info = info.strip()
-                print(info)
-                print(len(info.split()))
+                Parse.check_line(info)
                 if key == "nb_drones":
                     if Parse.param_state["nb_drones"] == 0:
                         try:
@@ -144,6 +143,21 @@ class Parse():
             int(hub_info[0]["pos_y"])
         except ValueError:
             raise ValueError("undefined position")
+
+    @staticmethod
+    def check_line(line):
+        m_start = line.find("[")
+        m_end = line.find("]")
+        if m_start != -1 and m_end != -1:
+            tmp = line.replace(line[m_start:m_end + 1], "")
+            print(tmp)
+            print(len(tmp.split()))
+            if len(tmp.split()) != 3:
+                raise ValueError("line not valid")
+            return tmp
+        else:
+            if len(line.split()) != 3:
+                raise ValueError("line not valid")    
 
 
 Parse.parse_line("../../maps/easy/01_linear_path.txt")
