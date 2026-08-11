@@ -3,44 +3,6 @@ from pydantic import BaseModel
 from typing import Tuple
 
 
-class Map(BaseModel):
-    nb_drones: int
-    start: Tuple[int, int]
-    end: Tuple[int, int]
-    hub_info: list[Hub]
-
-
-class Hub():
-    def __init__(self, name: str, x: int, y: int):
-        try:
-            self.name = str(name)
-            self.x = int(x)
-            self.y = int(y)
-            self.metadata = {
-                "zone_type": "normal",
-                "color": "None",
-                "max_drones": 1
-            }
-            self.connection: list[Tuple[Tuple[int, int]]] = []
-        except ValueError:
-            raise ValueError("Invalid hub informations")
-
-    def add_metadata(self, data: str, value: str):
-        if data.lower() == "zone_type":
-            if value.lower() not in ["normal", "blocked", "restricted", "priority"]:
-                raise ValueError("Invalid zone type")
-            self.metadata["zone_type"] = value
-        elif data.lower() == "color":
-            self.metadata["color"] = value
-        elif data.lower() == "max_drones":
-            try:
-                self.metadata["max_drones"] = int(value)
-            except ValueError:
-                raise ValueError("max_drones value not an integer")
-        else:
-            raise ValueError("Invalid data type")
-
-
 class Parse():
     nb_drones = 0
     start_hub = {}
@@ -55,7 +17,7 @@ class Parse():
     }
 
     @staticmethod
-    def read_line(file: str):
+    def parse_line(file: str):
         try:
             f = open(file)
             for line in f:
@@ -67,6 +29,8 @@ class Parse():
                 key, info = line.split(":", 1)
                 key = key.strip()
                 info = info.strip()
+                print(info)
+                print(len(info.split()))
                 if key == "nb_drones":
                     if Parse.param_state["nb_drones"] == 0:
                         try:
@@ -109,6 +73,7 @@ class Parse():
                     Parse.hubs.append(tmp)
                 elif key == "connection":
                     try:
+                        print(Parse.parse_connection(info))
                         info = info.split("-")
                         for connection in Parse.connection:
                             if set(info) == set(connection):
@@ -145,9 +110,31 @@ class Parse():
         return {**default_info, **hub_info}, default_metadata
 
     @staticmethod
+    def parse_connection(line: str):
+        default_metadata = {"max_link_capacity": 1}
+        metadata_index = line.find("[")
+        invalid_data = []
+        if metadata_index != -1:
+            metadata = dict([i.split("=") for i in line[metadata_index:].strip("[]").split()])
+            for check_metadata in metadata.keys():
+                if check_metadata != "max_link_capacity":
+                    invalid_data.append(check_metadata)
+            if len(invalid_data):
+                raise ValueError(f"invalid metadata '{invalid_data}'")
+            return {"info": line[:metadata_index].strip().split("-"), "metadata": metadata}
+        else:
+            return {"info": line.strip().split("-"), "metadata": default_metadata}
+
+
+    @staticmethod
     def parse_metadata(line, default_metadata):
         line = [i.split("=") for i in line.strip("[]").split()]
         new_metadata = {key: value for key, value in line}
+        # try:
+        #     if new_metadata["zone_type"] not in ["normal", "blocked", "restricted", "priority"]:
+        #         raise ValueError("invalid zone_type")
+        #     if not typenew_metadata["color"]:
+        #         raise ValueError("invalid zone_type")
         return {**default_metadata, **new_metadata}
 
     @staticmethod
@@ -158,10 +145,6 @@ class Parse():
         except ValueError:
             raise ValueError("undefined position")
 
-try:
-    Parse.read_line("../maps/easy/01_linear_path.txt")
-except ValueError:
-    print("coucou")
-print(Parse.nb_drones)
+
+Parse.parse_line("../../maps/easy/01_linear_path.txt")
 print(Parse.hubs)
-print(Parse.connection)
