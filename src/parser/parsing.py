@@ -132,7 +132,7 @@ class Parse():
         # try:
         #     if new_metadata["zone_type"] not in ["normal", "blocked", "restricted", "priority"]:
         #         raise ValueError("invalid zone_type")
-        #     if not typenew_metadata["color"]:
+        #     if new_metadata["color"] not in:
         #         raise ValueError("invalid zone_type")
         return {**default_metadata, **new_metadata}
 
@@ -148,16 +148,15 @@ class Parse():
     def check_line(line):
         m_start = line.find("[")
         m_end = line.find("]")
+        print(line)
         if m_start != -1 and m_end != -1:
             tmp = line.replace(line[m_start:m_end + 1], "")
-            print(tmp)
-            print(len(tmp.split()))
-            if len(tmp.split()) != 3:
-                raise ValueError("line not valid")
+            if len(tmp.split()) > 3:
+                raise ValueError("too much arguments")
             return tmp
         else:
-            if len(line.split()) != 3:
-                raise ValueError("line not valid")    
+            if len(line.split()) > 3:
+                raise ValueError("too much arguments")    
 
 
 Parse.parse_line("../../maps/easy/01_linear_path.txt")
