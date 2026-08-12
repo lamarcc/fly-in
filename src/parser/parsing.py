@@ -9,19 +9,15 @@ class Parse():
     end_hub = {}
     hubs = []
     connection = []
-
-    param_state = {
-        "nb_drones": 0,
-        "start_hub": 0,
-        "end_hub": 0,
-    }
+    hub_name = []
+    nb_line = 0
 
     @staticmethod
-    def parse_line(file: str):
+    def parse(file: str):
         try:
             f = open(file)
             for line in f:
-                hub_name = [name["name"] for name, _ in Parse.hubs]
+                Parse.nb_line += 1
                 if line.startswith("#"):
                     continue
                 if line.startswith("\n") and len(line) == 1:
@@ -29,68 +25,75 @@ class Parse():
                 key, info = line.split(":", 1)
                 key = key.strip()
                 info = info.strip()
-                Parse.check_line(info)
-                if key == "nb_drones":
-                    if Parse.param_state["nb_drones"] == 0:
-                        try:
-                            Parse.nb_drones = int(info)
-                            Parse.param_state["nb_drones"] = 1
-                        except ValueError:
-                            raise ValueError("Error nb_drones value")
-                    else:
-                        raise ValueError("Map file not conform, nb_drones doublon")
-                elif key == "start_hub":
-                    if Parse.param_state["start_hub"] == 0:
-                        try:
-                            Parse.start_hub = Parse.parse_hub(info)
-                            Parse.try_position(Parse.start_hub)
-                            Parse.param_state["start_hub"] = 1
-                            Parse.hubs.append(Parse.start_hub)
-                        except ValueError as e:
-                            raise ValueError(f"Error '{Parse.start_hub[0]['name']}': {e}")
-                    else:
-                        raise ValueError("Map file not conform, start_hub doublon")
-                elif key == "end_hub":
-                    if Parse.param_state["end_hub"] == 0:
-                        try:
-                            Parse.end_hub = Parse.parse_hub(info)
-                            Parse.try_position(Parse.end_hub)
-                            Parse.param_state["end_hub"] = 1
-                            Parse.hubs.append(Parse.end_hub)
-                        except ValueError as e:
-                            raise ValueError(f"Error '{Parse.end_hub[0]['name']}': {e}")
-                    else:
-                        raise ValueError("Map file not conform, end_hub doublon")
-                elif key == "hub":
-                    try:
-                        tmp = Parse.parse_hub(info)
-                        Parse.try_position(tmp)
-                        if tmp[0]["name"] in hub_name:
-                            raise ValueError("already exist")
-                    except ValueError as e:
-                        raise ValueError(f"Error '{tmp[0]['name']}': {e}")
-                    Parse.hubs.append(tmp)
-                elif key == "connection":
-                    try:
-                        print(Parse.parse_connection(info))
-                        info = info.split("-")
-                        for connection in Parse.connection:
-                            if set(info) == set(connection):
-                                raise ValueError("connection already exist")
-                        hub1, hub2 = info
-                        if hub1 not in hub_name:
-                            raise ValueError("Hub not defined yet!")
-                        if hub2 not in hub_name:
-                            raise ValueError("Hub not defined yet!")
-                        Parse.connection.append(info)
-                    except ValueError as e:
-                        raise ValueError(f"Error '{info}': {e}")
-                else:
-                    raise ValueError("Error format")
+                Parse.check_line(key, info)
+                Parse.parse_key_info(key, info)
         except FileNotFoundError:
             raise FileNotFoundError("File does not exist")
         except ValueError as e:
             print(e)
+
+    @staticmethod
+    def parse_key_info(key: str, info: str):
+        if key == "nb_drones":
+            try:
+                if Parse.nb_drones == 0:
+                    if int(info) < 1:
+                        raise ValueError("invalid value")
+                    Parse.nb_drones = int(info)
+                else:
+                    raise ValueError("already defined earlier")
+            except ValueError as e:
+                raise ValueError(f"[Error] line {Parse.nb_line}: {e}")
+        elif key == "start_hub":
+            try:
+                if not Parse.start_hub:
+                    Parse.start_hub = Parse.parse_hub(info)
+                    Parse.try_position(Parse.start_hub)
+                    Parse.hubs.append(Parse.start_hub)
+                    Parse.hub_name.append(Parse.start_hub["name"])
+                else:
+                    raise ValueError("'start_hub' already defined earlier")
+            except ValueError as e:
+                raise ValueError(f"[Error] line {Parse.nb_line}: {e}")
+        elif key == "end_hub":
+            try:
+                if not Parse.end_hub:
+                    Parse.end_hub = Parse.parse_hub(info)
+                    Parse.try_position(Parse.end_hub)
+                    Parse.hubs.append(Parse.end_hub)
+                    Parse.hub_name.append(Parse.end_hub["name"])
+                else:
+                    raise ValueError("'end_hub' already defined earlier")
+            except ValueError as e:
+                raise ValueError(f"[Error] line {Parse.nb_line}: {e}")
+        elif key == "hub":
+            try:
+                tmp_hub = Parse.parse_hub(info)
+                Parse.try_position(tmp_hub)
+                if tmp_hub["name"] in Parse.hub_name:
+                    raise ValueError("already exist")
+                Parse.hubs.append(tmp_hub)
+                Parse.hub_name.append(tmp_hub["name"])
+            except ValueError as e:
+                raise ValueError(f"[Error] line {Parse.nb_line}: {e}")
+        elif key == "connection":
+            try:
+                if info.find("[") != -1 and info.find("]") != -1:
+                    info = info.replace(info[info.find("["):info.find("]")+1], "")
+                info = info.strip().split("-")
+                for connection in Parse.connection:
+                    if set(info) == set(connection):
+                        raise ValueError(f"'{connection}' already defined earlier")
+                hub1, hub2 = info
+                if hub1 not in Parse.hub_name:
+                    raise ValueError(f"'{hub1}' not defined yet")
+                if hub2 not in Parse.hub_name:
+                    raise ValueError(f"'{hub2}' not defined yet")
+                Parse.connection.append(info)
+            except ValueError as e:
+                raise ValueError(f"[Error] line {Parse.nb_line}: {e}")
+        else:
+            raise ValueError(f"[Error] line {Parse.nb_line}: invalid key")
 
     @staticmethod
     def parse_hub(line: str):
@@ -103,10 +106,12 @@ class Parse():
             tmp_line = line[:metadata_index].strip()
             hub_info = {key: value for key, value in zip(["name", "pos_x", "pos_y"], tmp_line.split())}
             metadata = Parse.parse_metadata(line[metadata_index:], default_metadata)
-            return {**default_info, **hub_info}, metadata
+            hub_info["metadata"] = metadata
+            return {**default_info, **hub_info}
         tmp_line = line.strip()
         hub_info = {key: value for key, value in zip(["name", "pos_x", "pos_y"], tmp_line.split())}
-        return {**default_info, **hub_info}, default_metadata
+        hub_info["metadata"] = default_metadata
+        return {**default_info, **hub_info}
 
     @staticmethod
     def parse_connection(line: str):
@@ -120,10 +125,9 @@ class Parse():
                     invalid_data.append(check_metadata)
             if len(invalid_data):
                 raise ValueError(f"invalid metadata '{invalid_data}'")
-            return {"info": line[:metadata_index].strip().split("-"), "metadata": metadata}
+            return {"connection": line[:metadata_index].strip().split("-"), "metadata": metadata}
         else:
-            return {"info": line.strip().split("-"), "metadata": default_metadata}
-
+            return {"connection": line.strip().split("-"), "metadata": default_metadata}
 
     @staticmethod
     def parse_metadata(line, default_metadata):
@@ -139,25 +143,25 @@ class Parse():
     @staticmethod
     def try_position(hub_info):
         try:
-            int(hub_info[0]["pos_x"])
-            int(hub_info[0]["pos_y"])
+            int(hub_info["pos_x"])
+            int(hub_info["pos_y"])
         except ValueError:
             raise ValueError("undefined position")
 
     @staticmethod
-    def check_line(line):
-        m_start = line.find("[")
-        m_end = line.find("]")
-        print(line)
+    def check_line(key, info):
+        m_start = info.find("[")
+        m_end = info.find("]")
         if m_start != -1 and m_end != -1:
-            tmp = line.replace(line[m_start:m_end + 1], "")
-            if len(tmp.split()) > 3:
+            tmp = info.replace(info[m_start:m_end + 1], "")
+            if (key == "hub" and len(tmp.split()) > 3) or (key == "connection" and len(tmp.split()) > 1):
                 raise ValueError("too much arguments")
             return tmp
         else:
-            if len(line.split()) > 3:
-                raise ValueError("too much arguments")    
+            if (key == "hub" and len(tmp.split()) > 3) or (key == "connection" and len(tmp.split()) > 1):
+                raise ValueError("too much arguments")
 
 
-Parse.parse_line("../../maps/easy/01_linear_path.txt")
+Parse.parse("../../maps/easy/01_linear_path.txt")
 print(Parse.hubs)
+# print(Parse.connection)
