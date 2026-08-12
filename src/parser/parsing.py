@@ -1,6 +1,14 @@
 from __future__ import annotations
-from pydantic import BaseModel
 from typing import Tuple
+
+
+class Color():
+    list = [
+        "none", "red", "green", "blue", "yellow",
+        "orange", "purple", "pink", "brown",
+        "black", "white", "gray", "cyan",
+        "magenta", "lime", "navy", "teal",
+    ]
 
 
 class Parse():
@@ -31,6 +39,18 @@ class Parse():
             raise FileNotFoundError("File does not exist")
         except ValueError as e:
             print(e)
+
+    @staticmethod
+    def check_line(key, info):
+        m_start = info.find("[")
+        m_end = info.find("]")
+        if m_start != -1 and m_end != -1:
+            tmp = info.replace(info[m_start:m_end + 1], "")
+            if (key == "hub" and len(tmp.split()) > 3) or (key == "connection" and len(tmp.split()) > 1):
+                raise ValueError("too much arguments")
+        else:
+            if (key == "hub" and len(info.split()) > 3) or (key == "connection" and len(info.split()) > 1):
+                raise ValueError("too much arguments")
 
     @staticmethod
     def parse_key_info(key: str, info: str):
@@ -78,22 +98,28 @@ class Parse():
                 raise ValueError(f"[Error] line {Parse.nb_line}: {e}")
         elif key == "connection":
             try:
-                if info.find("[") != -1 and info.find("]") != -1:
-                    info = info.replace(info[info.find("["):info.find("]")+1], "")
-                info = info.strip().split("-")
+                parsed_connection = Parse.parse_connection(info)
                 for connection in Parse.connection:
-                    if set(info) == set(connection):
-                        raise ValueError(f"'{connection}' already defined earlier")
-                hub1, hub2 = info
+                    if set(parsed_connection) == set(connection):
+                        raise ValueError(f"'{parsed_connection['connection']}' already defined earlier")
+                hub1, hub2 = parsed_connection["connection"]
                 if hub1 not in Parse.hub_name:
                     raise ValueError(f"'{hub1}' not defined yet")
                 if hub2 not in Parse.hub_name:
                     raise ValueError(f"'{hub2}' not defined yet")
-                Parse.connection.append(info)
+                Parse.connection.append(parsed_connection)
             except ValueError as e:
                 raise ValueError(f"[Error] line {Parse.nb_line}: {e}")
         else:
             raise ValueError(f"[Error] line {Parse.nb_line}: invalid key")
+
+    @staticmethod
+    def try_position(hub_info):
+        try:
+            int(hub_info["pos_x"])
+            int(hub_info["pos_y"])
+        except ValueError:
+            raise ValueError("undefined position")
 
     @staticmethod
     def parse_hub(line: str):
@@ -102,16 +128,37 @@ class Parse():
         hub_info = {}
         tmp_line = ""
         metadata_index = line.find("[")
-        if metadata_index != -1:
-            tmp_line = line[:metadata_index].strip()
+        try:
+            if metadata_index != -1:
+                tmp_line = line[:metadata_index].strip()
+                hub_info = {key: value for key, value in zip(["name", "pos_x", "pos_y"], tmp_line.split())}
+                hub_info["metadata"] = Parse.parse_metadata(line[metadata_index:], default_metadata)
+                return {**default_info, **hub_info}
+            tmp_line = line.strip()
             hub_info = {key: value for key, value in zip(["name", "pos_x", "pos_y"], tmp_line.split())}
-            metadata = Parse.parse_metadata(line[metadata_index:], default_metadata)
-            hub_info["metadata"] = metadata
+            hub_info["metadata"] = default_metadata
             return {**default_info, **hub_info}
-        tmp_line = line.strip()
-        hub_info = {key: value for key, value in zip(["name", "pos_x", "pos_y"], tmp_line.split())}
-        hub_info["metadata"] = default_metadata
-        return {**default_info, **hub_info}
+        except ValueError as e:
+            raise ValueError(e)
+
+    @staticmethod
+    def parse_metadata(info, default_metadata):
+        info = [i.split("=") for i in info.strip("[]").split()]
+        new_metadata = {**default_metadata, **{key: value for key, value in info}}
+        try:
+            for key in new_metadata.keys():
+                if key not in ["zone", "color", "max_drones"]:
+                    raise ValueError(f"'{key}' not a valid key")
+            if "zone" in new_metadata and new_metadata["zone"] not in ["normal", "blocked", "restricted", "priority"]:
+                raise ValueError("invalid zone_type")
+            if "color" in new_metadata and new_metadata["color"].lower() not in Color.list:
+                print("[WARNING] Unknown color, grey set to default")
+                new_metadata["color"] = "grey"
+            if "max_drones" in new_metadata:
+                int(new_metadata["max_drones"])
+        except ValueError:
+            raise ValueError("invalid 'max_drones' value")
+        return new_metadata
 
     @staticmethod
     def parse_connection(line: str):
@@ -129,39 +176,5 @@ class Parse():
         else:
             return {"connection": line.strip().split("-"), "metadata": default_metadata}
 
-    @staticmethod
-    def parse_metadata(line, default_metadata):
-        line = [i.split("=") for i in line.strip("[]").split()]
-        new_metadata = {key: value for key, value in line}
-        # try:
-        #     if new_metadata["zone_type"] not in ["normal", "blocked", "restricted", "priority"]:
-        #         raise ValueError("invalid zone_type")
-        #     if new_metadata["color"] not in:
-        #         raise ValueError("invalid zone_type")
-        return {**default_metadata, **new_metadata}
-
-    @staticmethod
-    def try_position(hub_info):
-        try:
-            int(hub_info["pos_x"])
-            int(hub_info["pos_y"])
-        except ValueError:
-            raise ValueError("undefined position")
-
-    @staticmethod
-    def check_line(key, info):
-        m_start = info.find("[")
-        m_end = info.find("]")
-        if m_start != -1 and m_end != -1:
-            tmp = info.replace(info[m_start:m_end + 1], "")
-            if (key == "hub" and len(tmp.split()) > 3) or (key == "connection" and len(tmp.split()) > 1):
-                raise ValueError("too much arguments")
-            return tmp
-        else:
-            if (key == "hub" and len(tmp.split()) > 3) or (key == "connection" and len(tmp.split()) > 1):
-                raise ValueError("too much arguments")
-
 
 Parse.parse("../../maps/easy/01_linear_path.txt")
-print(Parse.hubs)
-# print(Parse.connection)
