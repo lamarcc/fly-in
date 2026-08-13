@@ -1,5 +1,6 @@
 from __future__ import annotations
 from typing import Tuple
+import errors
 
 
 class Color():
@@ -39,6 +40,8 @@ class Parse():
             raise FileNotFoundError("File does not exist")
         except ValueError as e:
             print(e)
+        except errors.MapFileError as e:
+            print(e)
 
     @staticmethod
     def check_line(key, info):
@@ -47,10 +50,10 @@ class Parse():
         if m_start != -1 and m_end != -1:
             tmp = info.replace(info[m_start:m_end + 1], "")
             if (key == "hub" and len(tmp.split()) > 3) or (key == "connection" and len(tmp.split()) > 1):
-                raise ValueError("too much arguments")
+                raise errors.InvalidLineError(Parse.nb_line, "too much arguments")
         else:
             if (key == "hub" and len(info.split()) > 3) or (key == "connection" and len(info.split()) > 1):
-                raise ValueError("too much arguments")
+                raise errors.InvalidLineError(Parse.nb_line, "too much arguments")
 
     @staticmethod
     def parse_key_info(key: str, info: str):
@@ -58,12 +61,12 @@ class Parse():
             try:
                 if Parse.nb_drones == 0:
                     if int(info) < 1:
-                        raise ValueError("invalid value")
+                        raise errors.InvalidDronesValue(Parse.nb_line, "cant have less than 1 drone")
                     Parse.nb_drones = int(info)
                 else:
-                    raise ValueError("already defined earlier")
-            except ValueError as e:
-                raise ValueError(f"[Error] line {Parse.nb_line}: {e}")
+                    raise errors.MapFileError(Parse.nb_line, "already defined earlier")
+            except ValueError:
+                raise errors.InvalidDronesValue(Parse.nb_line, "'nb_drones' value need to be an integer")
         elif key == "start_hub":
             try:
                 if not Parse.start_hub:
@@ -97,19 +100,16 @@ class Parse():
             except ValueError as e:
                 raise ValueError(f"[Error] line {Parse.nb_line}: {e}")
         elif key == "connection":
-            try:
-                parsed_connection = Parse.parse_connection(info)
-                for connection in Parse.connection:
-                    if set(parsed_connection) == set(connection):
-                        raise ValueError(f"'{parsed_connection['connection']}' already defined earlier")
-                hub1, hub2 = parsed_connection["connection"]
-                if hub1 not in Parse.hub_name:
-                    raise ValueError(f"'{hub1}' not defined yet")
-                if hub2 not in Parse.hub_name:
-                    raise ValueError(f"'{hub2}' not defined yet")
-                Parse.connection.append(parsed_connection)
-            except ValueError as e:
-                raise ValueError(f"[Error] line {Parse.nb_line}: {e}")
+            parsed_connection = Parse.parse_connection(info)
+            for connection in Parse.connection:
+                if set(parsed_connection["connection"]) == set(connection["connection"]):
+                    raise ValueError(f"'{parsed_connection['connection']}' already defined earlier")
+            hub1, hub2 = parsed_connection["connection"]
+            if hub1 not in Parse.hub_name:
+                raise ValueError(f"'{hub1}' not defined yet")
+            if hub2 not in Parse.hub_name:
+                raise ValueError(f"'{hub2}' not defined yet")
+            Parse.connection.append(parsed_connection)
         else:
             raise ValueError(f"[Error] line {Parse.nb_line}: invalid key")
 
@@ -148,16 +148,16 @@ class Parse():
         try:
             for key in new_metadata.keys():
                 if key not in ["zone", "color", "max_drones"]:
-                    raise ValueError(f"'{key}' not a valid key")
+                    raise errors.InvalidKeyError(Parse.nb_line, f"'{key}' not a valid key")
             if "zone" in new_metadata and new_metadata["zone"] not in ["normal", "blocked", "restricted", "priority"]:
-                raise ValueError("invalid zone_type")
+                raise errors.HubError(Parse.nb_line, "invalid zone_type")
             if "color" in new_metadata and new_metadata["color"].lower() not in Color.list:
                 print("[WARNING] Unknown color, grey set to default")
                 new_metadata["color"] = "grey"
             if "max_drones" in new_metadata:
                 int(new_metadata["max_drones"])
         except ValueError:
-            raise ValueError("invalid 'max_drones' value")
+            raise errors.InvalidDronesValue(Parse.nb_line, "invalid 'max_drones' value")
         return new_metadata
 
     @staticmethod
@@ -171,7 +171,7 @@ class Parse():
                 if check_metadata != "max_link_capacity":
                     invalid_data.append(check_metadata)
             if len(invalid_data):
-                raise ValueError(f"invalid metadata '{invalid_data}'")
+                raise errors.MetadataError(Parse.nb_line, f"'{invalid_data}' invalid metadata")
             return {"connection": line[:metadata_index].strip().split("-"), "metadata": metadata}
         else:
             return {"connection": line.strip().split("-"), "metadata": default_metadata}
