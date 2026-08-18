@@ -24,9 +24,6 @@ class MapFileError(Exception):
         error_type = bcolors.FAIL + bcolors.BOLD + "[MapFileError] " + bcolors.ENDC
         return error_type + bcolors.BOLD + f"Line {self.line}: "
 
-    def test(self):
-        self.t.append(self.__str__())
-
     def msg(line, message):
         error = bcolors.FAIL + bcolors.BOLD + "[MapFileError] " + bcolors.ENDC + bcolors.BOLD + f"Line {line}: "
         return error + message
@@ -46,13 +43,13 @@ class HubError(MapFileError):
 
 
 class MetadataError(MapFileError):
-    def __init__(self, line, key):
-        self.key = key
+    def __init__(self, line, message):
+        self.message= message
         super().__init__(line)
 
     def __str__(self):
         error = super().__str__()
-        return error + f"Unknown metadata '{self.key}'"
+        return error + self.message
 
 
 class InvalidKeyError(MapFileError):
@@ -91,3 +88,12 @@ class DoublonError(MapFileError):
     def __str__(self):
         error = super().__str__()
         return error + f"Already defined earlier '{self.key}'"
+
+
+class ConnectionError(MapFileError):
+    def __init__(self, line):
+        super().__init__(line)
+
+    def __str__(self):
+        error = super().__str__()
+        return error + f"Connection invalid, follow <from-to>"
