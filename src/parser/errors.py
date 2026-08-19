@@ -1,4 +1,4 @@
-class bcolors:
+class Colors():
     HEADER = '\033[95m'
     OKBLUE = '\033[94m'
     OKCYAN = '\033[96m'
@@ -12,7 +12,7 @@ class bcolors:
 
 class Error(Exception):
     def msg(self, type, message):
-        error = bcolors.FAIL + "[" + type + "]" +  bcolors.ENDC
+        error = Colors.FAIL + "[" + type + "]" + Colors.ENDC
         return error + message
 
 
@@ -21,16 +21,17 @@ class MapFileError(Exception):
         self.line = line
 
     def __str__(self):
-        error_type = bcolors.FAIL + bcolors.BOLD + "[MapFileError] " + bcolors.ENDC
-        return error_type + bcolors.BOLD + f"Line {self.line}: "
+        error_type = Colors.FAIL + Colors.BOLD + "[MapFileError] " + Colors.ENDC + Colors.BOLD
+        return error_type + f"Line {self.line}: " + Colors.ENDC
 
     def msg(line, message):
-        error = bcolors.FAIL + bcolors.BOLD + "[MapFileError] " + bcolors.ENDC + bcolors.BOLD + f"Line {line}: "
-        return error + message
+        error = Colors.FAIL + Colors.BOLD + "[MapFileError] " + Colors.ENDC + Colors.BOLD + f"Line {line}: "
+        return error + message + Colors.ENDC
 
     def warning(line, message):
-        warning = bcolors.WARNING + bcolors.BOLD + "[MapFileWarning] " + bcolors.ENDC + bcolors.BOLD + f"Line {line}: "
-        return warning + message
+        warning = Colors.WARNING + Colors.BOLD + "[MapFileWarning] " + Colors.ENDC + Colors.BOLD + f"Line {line}: "
+        return warning + message + Colors.ENDC
+
 
 class HubError(MapFileError):
     def __init__(self, line, message):
@@ -44,7 +45,7 @@ class HubError(MapFileError):
 
 class MetadataError(MapFileError):
     def __init__(self, line, message):
-        self.message= message
+        self.message = message
         super().__init__(line)
 
     def __str__(self):
@@ -91,9 +92,10 @@ class DoublonError(MapFileError):
 
 
 class ConnectionError(MapFileError):
-    def __init__(self, line):
+    def __init__(self, line, message):
+        self.message = message
         super().__init__(line)
 
     def __str__(self):
         error = super().__str__()
-        return error + f"Connection invalid, follow <from-to>"
+        return error + self.message

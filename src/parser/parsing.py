@@ -17,12 +17,12 @@ class Parse():
     start_hub = {}
     end_hub = {}
     hubs = []
+    known_position = []
     connection = []
     hub_name = []
     nb_line = 0
     err = []
 
-    @staticmethod
     def parse(file: str):
         try:
             f = open(file)
@@ -34,8 +34,8 @@ class Parse():
                     if line.startswith("\n") and len(line) == 1:
                         continue
                     key, info = line.split(":", 1)
-                    key = key.strip()
-                    info = info.strip()
+                    key = key.strip().lower()
+                    info = info.strip().lower()
                     Parse.check_line(key, info)
                     Parse.parse_key_info(key, info)
                 except ValueError:
@@ -47,7 +47,6 @@ class Parse():
                     print(error)
         except FileNotFoundError:
             print(errors.MapFileError.msg(Parse.nb_line, "File does not exist"))
-        
 
     @staticmethod
     def check_line(key, info):
@@ -108,10 +107,15 @@ class Parse():
     @staticmethod
     def try_position(hub_info):
         try:
-            int(hub_info["pos_x"])
-            int(hub_info["pos_y"])
+            x = int(hub_info["pos_x"])
+            y = int(hub_info["pos_y"])
+            for verif in Parse.hubs:
+                if x == verif["pos_x"] and y == verif["pos_y"]:
+                    Parse.err.append(errors.HubError(Parse.nb_line, f"Position <{x}, {y}> already occupied by Hub: {verif['name']}"))
+            hub_info["pos_x"] = int(hub_info["pos_x"])
+            hub_info["pos_y"] = int(hub_info["pos_y"])
         except ValueError:
-            raise errors.HubError(Parse.nb_line, f"Undefined '{hub_info["name"]}' hub position")
+            raise errors.HubError(Parse.nb_line, f"Undefined '{hub_info['name']}' hub position")
 
     @staticmethod
     def parse_hub(line: str):
@@ -124,7 +128,7 @@ class Parse():
             tmp_line = line[:metadata_index].strip()
             hub_info = {key: value for key, value in zip(["name", "pos_x", "pos_y"], tmp_line.split())}
             if hub_info["name"] in Parse.hub_name:
-                Parse.err.append(errors.HubError(Parse.nb_line, f"'{hub_info["name"]}' already defined earlier"))
+                Parse.err.append(errors.HubError(Parse.nb_line, f"'{hub_info['name']}' already defined earlier"))
             Parse.hub_name.append(hub_info["name"])
             hub_info["metadata"] = Parse.parse_metadata(hub_info["name"], line[metadata_index:], default_metadata)
             return {**default_info, **hub_info}
@@ -132,7 +136,7 @@ class Parse():
             tmp_line = line.strip()
             hub_info = {key: value for key, value in zip(["name", "pos_x", "pos_y"], tmp_line.split())}
             if hub_info["name"] in Parse.hub_name:
-                Parse.err.append(errors.HubError(Parse.nb_line, f"'{hub_info["name"]}' already defined earlier"))
+                Parse.err.append(errors.HubError(Parse.nb_line, f"'{hub_info['name']}' already defined earlier"))
             Parse.hub_name.append(hub_info["name"])
             hub_info["metadata"] = default_metadata
             return {**default_info, **hub_info}
@@ -143,21 +147,28 @@ class Parse():
         for verif_format in info:
             if len(verif_format) == 1:
                 verif_format.append("undefined")
-            if len(verif_format) > 2:
+            elif len(verif_format) == 2 and verif_format[1] == "":
+                if verif_format[0] == "zone":
+                    print(errors.MapFileError.warning(Parse.nb_line, f"Value is missing for '{verif_format[0]}', 'normal' set by default"))
+                    verif_format[1] = "normal"
+                elif verif_format[0] == "max_drones":
+                    print(errors.MapFileError.warning(Parse.nb_line, f"Value is missing for '{verif_format[0]}', '1' set by default"))
+                    verif_format[1] = 1
+            elif len(verif_format) > 2:
                 info.remove(verif_format)
-                Parse.err.append(errors.MetadataError(Parse.nb_line, f"Typing incorrect, follow <metadata=info>"))
+                Parse.err.append(errors.MetadataError(Parse.nb_line, "Typing incorrect, follow <metadata=info>"))
         new_metadata = {**default_metadata, **{key: value for key, value in info}}
         try:
             for key in new_metadata.keys():
                 if key not in ["zone", "color", "max_drones"]:
                     Parse.err.append(errors.MetadataError(Parse.nb_line, f"Unknown metadata '{key}'"))
             if "zone" in new_metadata and new_metadata["zone"] not in ["normal", "blocked", "restricted", "priority"]:
-                Parse.err.append(errors.HubError(Parse.nb_line, f"Invalid zone_type '{new_metadata["zone"]}'"))
+                Parse.err.append(errors.HubError(Parse.nb_line, f"Invalid zone_type '{new_metadata['zone']}'"))
             if "color" in new_metadata and new_metadata["color"].lower() not in Color.list:
                 print(errors.MapFileError.warning(Parse.nb_line, f"Unknown color for hub '{name}', color set to grey by default"))
                 new_metadata["color"] = "grey"
             if "max_drones" in new_metadata:
-                int(new_metadata["max_drones"])
+                new_metadata["max_drones"] = int(new_metadata["max_drones"])
         except ValueError:
             Parse.err.append(errors.InvalidDronesValue(Parse.nb_line, "Invalid 'max_drones' value"))
         return new_metadata
@@ -170,32 +181,43 @@ class Parse():
         if metadata_index != -1:
             link = line[:metadata_index].strip().split("-")
             if len(link) != 2:
-                Parse.err.append(errors.ConnectionError(Parse.nb_line))
+                Parse.err.append(errors.ConnectionError(Parse.nb_line, "Connection invalid, follow <from-to>"))
                 link = [None, None]
             info = [i.split("=") for i in line[metadata_index:].strip("[]").split()]
             for verif_format in info:
                 if len(verif_format) == 1:
-                    Parse.err.append(errors.MetadataError(Parse.nb_line, f"Missing value after metadata key, follow <metadata=value>"))
+                    Parse.err.append(errors.MetadataError(Parse.nb_line, "Missing value after metadata key, follow <metadata=value>"))
                     verif_format.append("undefined")
-                elif len(verif_format) == 2:
-                    print(errors.MapFileError.warning(Parse.nb_line, f"No value set for '{verif_format[0]}', '1' set by default"))
+                elif len(verif_format) == 2 and verif_format[1] == "":
+                    print(errors.MapFileError.warning(Parse.nb_line, f"Value is missing for '{verif_format[0]}', '1' set by default"))
                     verif_format[1] = 1
                 elif len(verif_format) > 2:
                     info.remove(verif_format)
-                    Parse.err.append(errors.MetadataError(Parse.nb_line, f"Typing incorrect, follow <metadata=info>"))
+                    Parse.err.append(errors.MetadataError(Parse.nb_line, "Typing incorrect, follow <metadata=info>"))
             metadata = {key: value for key, value in info}
-            for check_metadata in metadata.keys():
-                if check_metadata != "max_link_capacity":
-                    invalid_data.append(check_metadata)
-            if len(invalid_data):
-                Parse.err.append(errors.MetadataError(Parse.nb_line, f"Unknown metadata '{invalid_data}'"))
+            try:
+                for check_metadata in metadata.keys():
+                    if check_metadata != "max_link_capacity":
+                        invalid_data.append(check_metadata)
+                if len(invalid_data):
+                    Parse.err.append(errors.MetadataError(Parse.nb_line, f"Unknown metadata '{invalid_data}'"))
+                metadata["max_link_capacity"] = int(metadata["max_link_capacity"])
+            except ValueError:
+                Parse.err.append(errors.ConnectionError(Parse.nb_line, "Value need to be an integer for 'max_link_capacity'"))
             return {"connection": link, "metadata": metadata}
         else:
             link = line.strip().split("-")
             if len(link) != 2:
-                Parse.err.append(errors.ConnectionError(Parse.nb_line))
+                Parse.err.append(errors.ConnectionError(Parse.nb_line, "Connection invalid, follow <from-to>"))
                 link = [None, None]
             return {"connection": link, "metadata": default_metadata}
 
 
 Parse.parse("../../maps/easy/01_linear_path.txt")
+print(Parse.nb_drones)
+print(Parse.start_hub)
+print(Parse.end_hub)
+for hub in Parse.hubs:
+    print(hub)
+for connection in Parse.connection:
+    print(connection)
