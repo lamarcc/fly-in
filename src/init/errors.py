@@ -84,6 +84,7 @@ class InvalidDronesValue(MapFileError):
 
 class DoublonError(MapFileError):
     def __init__(self, line, key):
+        self.key = key
         super().__init__(line)
 
     def __str__(self):

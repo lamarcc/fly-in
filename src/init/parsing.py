@@ -1,6 +1,6 @@
 from __future__ import annotations
 from typing import Tuple
-import errors
+from . import errors
 
 
 class Color():
@@ -23,6 +23,7 @@ class Parse():
     nb_line = 0
     err = []
 
+    @staticmethod
     def parse(file: str):
         try:
             f = open(file)
@@ -94,12 +95,12 @@ class Parse():
             parsed_connection = Parse.parse_connection(info)
             for connection in Parse.connection:
                 if set(parsed_connection["connection"]) == set(connection["connection"]):
-                    Parse.err.append(errors.DoublonError(Parse.nb_line, parsed_connection["connection"]))
+                    Parse.err.append(errors.ConnectionError(Parse.nb_line, f"Connection already defined earlier <{parsed_connection['connection'][0]}-{parsed_connection['connection'][1]}>"))
             hub1, hub2 = parsed_connection["connection"]
             if hub1 not in Parse.hub_name and hub1 is not None:
-                Parse.err.append(errors.HubError(Parse.nb_line, f"Hub '{hub1}' not defined yet"))
+                raise errors.HubError(Parse.nb_line, f"Hub '{hub1}' not defined yet")
             if hub2 not in Parse.hub_name and hub2 is not None:
-                Parse.err.append(errors.HubError(Parse.nb_line, f"Hub '{hub2}' not defined yet"))
+                raise errors.HubError(Parse.nb_line, f"Hub '{hub2}' not defined yet")
             Parse.connection.append(parsed_connection)
         else:
             raise errors.InvalidKeyError(Parse.nb_line, key)
@@ -211,13 +212,3 @@ class Parse():
                 Parse.err.append(errors.ConnectionError(Parse.nb_line, "Connection invalid, follow <from-to>"))
                 link = [None, None]
             return {"connection": link, "metadata": default_metadata}
-
-
-Parse.parse("../../maps/easy/01_linear_path.txt")
-print(Parse.nb_drones)
-print(Parse.start_hub)
-print(Parse.end_hub)
-for hub in Parse.hubs:
-    print(hub)
-for connection in Parse.connection:
-    print(connection)
