@@ -16,6 +16,10 @@ class Error(Exception):
         return error + message
 
 
+class ParsingError(Exception):
+    pass
+
+
 class MapFileError(Exception):
     def __init__(self, line):
         self.line = line
@@ -72,7 +76,7 @@ class InvalidLineError(MapFileError):
         return error + "Too much arguments"
 
 
-class InvalidDronesValue(MapFileError):
+class InvalidValue(MapFileError):
     def __init__(self, line, message):
         self.message = message
         super().__init__(line)

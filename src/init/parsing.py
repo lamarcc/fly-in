@@ -46,6 +46,7 @@ class Parse():
             if self.err:
                 for error in self.err:
                     print(error)
+                raise errors.ParsingError
         except FileNotFoundError:
             print(errors.MapFileError.msg(self.nb_line, "File does not exist"))
 
@@ -65,12 +66,12 @@ class Parse():
             try:
                 if self.nb_drones == 0:
                     if int(info) < 1:
-                        raise errors.InvalidDronesValue(self.nb_line, "Cant have less than 1 drone")
+                        raise errors.InvalidValue(self.nb_line, "Cant have less than 1 drone")
                     self.nb_drones = int(info)
                 else:
                     raise errors.DoublonError(self.nb_line, key)
             except ValueError:
-                raise errors.InvalidDronesValue(self.nb_line, "'nb_drones' value need to be an integer")
+                raise errors.InvalidValue(self.nb_line, "'nb_drones' value need to be an integer")
         elif key == "start_hub":
             if not self.start_hub:
                 self.start_hub = self.parse_hub(info)
@@ -112,6 +113,8 @@ class Parse():
                     self.err.append(errors.HubError(self.nb_line, f"Position <{x}, {y}> already occupied by Hub: {verif['name']}"))
             hub_info["pos_x"] = int(hub_info["pos_x"])
             hub_info["pos_y"] = int(hub_info["pos_y"])
+            if hub_info["pos_x"] < 0 or hub_info["pos_y"] < 0:
+                self.err.append(errors.InvalidValue(self.nb_line, "Invalid coordinates, minimum is 0"))
         except ValueError:
             raise errors.HubError(self.nb_line, f"Undefined '{hub_info['name']}' hub position")
 
@@ -160,13 +163,15 @@ class Parse():
                     self.err.append(errors.MetadataError(self.nb_line, f"Unknown metadata '{key}'"))
             if "zone" in new_metadata and new_metadata["zone"] not in ["normal", "blocked", "restricted", "priority"]:
                 self.err.append(errors.HubError(self.nb_line, f"Invalid zone_type '{new_metadata['zone']}'"))
-            if "color" in new_metadata and new_metadata["color"].lower() not in Color.list:
+            if "color" in new_metadata and new_metadata["color"] not in Color.list:
                 print(errors.MapFileError.warning(self.nb_line, f"Unknown color for hub '{name}', color set to grey by default"))
                 new_metadata["color"] = "grey"
             if "max_drones" in new_metadata:
                 new_metadata["max_drones"] = int(new_metadata["max_drones"])
+                if new_metadata["max_drones"] < 1:
+                    self.err.append(errors.InvalidValue(self.nb_line, "Invalid 'max_drones' value, minimum is 1"))
         except ValueError:
-            self.err.append(errors.InvalidDronesValue(self.nb_line, "Invalid 'max_drones' value"))
+            self.err.append(errors.InvalidValue(self.nb_line, "Invalid 'max_drones' value"))
         return new_metadata
 
     def parse_connection(self, line: str):
@@ -197,6 +202,8 @@ class Parse():
                 if len(invalid_data):
                     self.err.append(errors.MetadataError(self.nb_line, f"Unknown metadata '{invalid_data}'"))
                 metadata["max_link_capacity"] = int(metadata["max_link_capacity"])
+                if metadata["max_link_capacity"] < 1:
+                    self.err.append(errors.InvalidValue(self.nb_line, "Invalid 'max_link_capacity' value, minimum is 1"))
             except ValueError:
                 self.err.append(errors.ConnectionError(self.nb_line, "Value need to be an integer for 'max_link_capacity'"))
             return {"hub_a": link[0], "hub_b": link[1], "metadata": metadata}
