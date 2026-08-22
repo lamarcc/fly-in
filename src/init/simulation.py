@@ -51,9 +51,9 @@ class Simulation():
                 self.map.map[z.pos_y][z.pos_x] = 1
             elif z.zone_type == "priority":
                 self.map.map[z.pos_y][z.pos_x] = 2
-            elif z.zone_type == "blocked":
-                self.map.map[z.pos_y][z.pos_x] = 3
             elif z.zone_type == "restricted":
+                self.map.map[z.pos_y][z.pos_x] = 3
+            elif z.zone_type == "blocked":
                 self.map.map[z.pos_y][z.pos_x] = 4
         for x in reversed(self.map.map):
             print(x)
@@ -68,7 +68,9 @@ class Simulation():
         self.init_map()
 
     def run(self):
-        pass
+        p = Path()
+        drone = Drone(1)
+        p.path(self.map, drone)
 
 
 class Map():
@@ -113,3 +115,72 @@ class ZoneType(Enum):
     BLOCKED = "blocked"
     RESTRICTED = "restricted"
     PRIORITY = "priority"
+
+
+class Drone():
+    def __init__(self, number):
+        self.number = number
+        self.path = []
+        self.finished = False
+
+
+class Path():
+    def __init__(self):
+        pass
+
+    def path(self, map, drone):
+        start = map.start_hub
+        end = map.end_hub
+        allowed = []
+        ndone = []
+        d = {}
+        r_d = {}
+        tour = 0
+        path = {}
+        for hub in map.hubs.values():
+            if hub.zone_type == "blocked":
+                continue
+            allowed.append(hub)
+            if hub == start:
+                ndone.append((hub, 0))
+                d[start] = 0
+            else:
+                ndone.append((hub, float('inf')))
+                d[hub] = float('inf')
+        while len(d.keys()) != 0:
+            lowest = min([v for k, v in d.items()])
+            r_d = {v: k for k, v in d.items()}
+            hub = r_d[lowest]
+            if hub == end:
+                print(d[hub])
+            for hub_to in hub.connected_to:
+                if hub_to not in d.keys():
+                    continue
+                print("hub actual")
+                print(hub.name)
+                print("hub_to verified")
+                print(hub_to.name)
+                if hub_to.zone_type == "normal":
+                    if d[hub_to] == float('inf'):
+                        d[hub_to] = 0
+                    d[hub_to] += d[hub] + 1
+                elif hub_to.zone_type == "priority":
+                    if d[hub_to] == float('inf'):
+                        d[hub_to] = 0
+                    d[hub_to] += d[hub] + 0.5
+                elif hub_to.zone_type == "restricted":
+                    if d[hub_to] == float('inf'):
+                        d[hub_to] = 0
+                    d[hub_to] += d[hub] + 2
+                print(d[hub_to])
+                path[hub_to] = hub
+            d.pop(hub)
+        for key, value in path.items():
+            print(key.name)
+            print(value.name)
+        ## TODO: 
+        ## - Modifier le cas ou le meme hub est verifier plusieurs fois dans la boucle, 
+        ## (dernier tour, goal est verifier plusieurs fois donc sa valeur change plusieurs 
+        ## fois alors que le goal a deja ete trouve, la valeur doit changer que si la nouvelle est plus petite que l' ancienne)
+        ## - Trouver un moyen de sauvegarder le path petit a petit
+        ## - Ameliorer l' algo pour les max_drones et max_link_capacity plus tard quand plusieurs drone seront ajoute
