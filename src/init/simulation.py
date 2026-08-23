@@ -124,6 +124,24 @@ class Drone():
         self.finished = False
 
 
+class Way():
+    def __init__(self, map):
+        self.map = map
+        self.all_path = [[]]
+
+    def new_path(self, start, hub_to, pathprev):
+        round = 0
+        path = []
+        for h in pathprev:
+            path.append(h)
+        if hub_to.zone_type == "restricted":
+            round += 2
+        else:
+            round += 1
+        path.append(hub_to, round)
+        return path
+
+
 class Path():
     def __init__(self):
         pass
@@ -135,7 +153,6 @@ class Path():
         ndone = []
         d = {}
         r_d = {}
-        tour = 0
         path = {}
         for hub in map.hubs.values():
             if hub.zone_type == "blocked":
@@ -151,36 +168,26 @@ class Path():
             lowest = min([v for k, v in d.items()])
             r_d = {v: k for k, v in d.items()}
             hub = r_d[lowest]
-            if hub == end:
-                print(d[hub])
             for hub_to in hub.connected_to:
                 if hub_to not in d.keys():
                     continue
-                print("hub actual")
-                print(hub.name)
-                print("hub_to verified")
-                print(hub_to.name)
                 if hub_to.zone_type == "normal":
-                    if d[hub_to] == float('inf'):
-                        d[hub_to] = 0
-                    d[hub_to] += d[hub] + 1
+                    if d[hub] + 1 < d[hub_to]:
+                        d[hub_to] = d[hub] + 1
+                        path[hub_to] = hub
                 elif hub_to.zone_type == "priority":
-                    if d[hub_to] == float('inf'):
-                        d[hub_to] = 0
-                    d[hub_to] += d[hub] + 0.5
+                    if d[hub] + 0.5 < d[hub_to]:
+                        d[hub_to] = d[hub] + 0.5
+                        path[hub_to] = hub
                 elif hub_to.zone_type == "restricted":
-                    if d[hub_to] == float('inf'):
-                        d[hub_to] = 0
-                    d[hub_to] += d[hub] + 2
-                print(d[hub_to])
-                path[hub_to] = hub
+                    if d[hub] + 2 < d[hub_to]:
+                        d[hub_to] = d[hub] + 2
+                        path[hub_to] = hub
             d.pop(hub)
-        for key, value in path.items():
-            print(key.name)
-            print(value.name)
-        ## TODO: 
-        ## - Modifier le cas ou le meme hub est verifier plusieurs fois dans la boucle, 
-        ## (dernier tour, goal est verifier plusieurs fois donc sa valeur change plusieurs 
-        ## fois alors que le goal a deja ete trouve, la valeur doit changer que si la nouvelle est plus petite que l' ancienne)
-        ## - Trouver un moyen de sauvegarder le path petit a petit
-        ## - Ameliorer l' algo pour les max_drones et max_link_capacity plus tard quand plusieurs drone seront ajoute
+        p = [end.name]
+        d = end
+        while d != start:
+            d = path[d]
+            p.append(d.name)
+        for i in reversed(p):
+            print(i)
