@@ -68,9 +68,9 @@ class Simulation():
         self.init_map()
 
     def run(self):
-        p = Path()
+        p = Pathfinding(self.map)
         drone = Drone(1)
-        p.path(self.map, drone)
+        p.path(self.map)
 
 
 class Map():
@@ -124,70 +124,58 @@ class Drone():
         self.finished = False
 
 
-class Way():
+class Pathfinding():
     def __init__(self, map):
-        self.map = map
-        self.all_path = [[]]
+        self.start = map.start_hub
+        self.end = map.end_hub
 
-    def new_path(self, start, hub_to, pathprev):
-        round = 0
-        path = []
-        for h in pathprev:
-            path.append(h)
-        if hub_to.zone_type == "restricted":
-            round += 2
-        else:
-            round += 1
-        path.append(hub_to, round)
-        return path
-
-
-class Path():
-    def __init__(self):
-        pass
-
-    def path(self, map, drone):
-        start = map.start_hub
-        end = map.end_hub
-        allowed = []
-        ndone = []
-        d = {}
-        r_d = {}
+    def path(self, map):
+        zone = {}
+        r_zone = {}
         path = {}
         for hub in map.hubs.values():
             if hub.zone_type == "blocked":
                 continue
-            allowed.append(hub)
-            if hub == start:
-                ndone.append((hub, 0))
-                d[start] = 0
+            if hub == self.start:
+                zone[self.start] = 0
             else:
-                ndone.append((hub, float('inf')))
-                d[hub] = float('inf')
-        while len(d.keys()) != 0:
-            lowest = min([v for k, v in d.items()])
-            r_d = {v: k for k, v in d.items()}
-            hub = r_d[lowest]
+                zone[hub] = float('inf')
+        while len(zone.keys()) != 0:
+            lowest = min([v for k, v in zone.items()])
+            r_zone = {v: k for k, v in zone.items()}
+            hub = r_zone[lowest]
             for hub_to in hub.connected_to:
-                if hub_to not in d.keys():
+                if hub_to not in zone.keys():
                     continue
                 if hub_to.zone_type == "normal":
-                    if d[hub] + 1 < d[hub_to]:
-                        d[hub_to] = d[hub] + 1
+                    if zone[hub] + 1 < zone[hub_to]:
+                        zone[hub_to] = zone[hub] + 1
                         path[hub_to] = hub
                 elif hub_to.zone_type == "priority":
-                    if d[hub] + 0.5 < d[hub_to]:
-                        d[hub_to] = d[hub] + 0.5
+                    if zone[hub] + 0.5 < zone[hub_to]:
+                        zone[hub_to] = zone[hub] + 0.5
                         path[hub_to] = hub
                 elif hub_to.zone_type == "restricted":
-                    if d[hub] + 2 < d[hub_to]:
-                        d[hub_to] = d[hub] + 2
+                    if zone[hub] + 2 < zone[hub_to]:
+                        zone[hub_to] = zone[hub] + 2
                         path[hub_to] = hub
-            d.pop(hub)
-        p = [end.name]
-        d = end
-        while d != start:
+            zone.pop(hub)
+        p = [self.end.name]
+        d = self.end
+        while d != self.start:
             d = path[d]
             p.append(d.name)
         for i in reversed(p):
             print(i)
+
+    def get_cost(self):
+        pass
+
+    def get_full_path(self):
+        pass
+
+    def get_key(self):
+        pass
+
+    def get_value(self):
+        pass
