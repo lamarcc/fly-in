@@ -9,6 +9,8 @@ class Color():
         "orange", "purple", "pink", "brown",
         "black", "white", "gray", "cyan",
         "magenta", "lime", "navy", "teal",
+        "maroon", "gold", "darkred", "violet",
+        "crimson", "rainbow"
     ]
 
 
@@ -113,8 +115,8 @@ class Parse():
                     self.err.append(errors.HubError(self.nb_line, f"Position <{x}, {y}> already occupied by Hub: {verif['name']}"))
             hub_info["pos_x"] = int(hub_info["pos_x"])
             hub_info["pos_y"] = int(hub_info["pos_y"])
-            if hub_info["pos_x"] < 0 or hub_info["pos_y"] < 0:
-                self.err.append(errors.InvalidValue(self.nb_line, "Invalid coordinates, minimum is 0"))
+            # if hub_info["pos_x"] < 0 or hub_info["pos_y"] < 0:
+            #     self.err.append(errors.InvalidValue(self.nb_line, "Invalid coordinates, minimum is 0"))
         except ValueError:
             raise errors.HubError(self.nb_line, f"Undefined '{hub_info['name']}' hub position")
 

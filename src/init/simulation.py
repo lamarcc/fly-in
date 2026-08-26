@@ -10,7 +10,16 @@ class Simulation():
         self.map = Map()
         self.parse = Parse()
         self.is_running = False
+        self.drones = []
         self.drones_finished = 0
+
+    def init_drones(self):
+        # drones = []
+        for i in range(1, self.map.nb_drones + 1):
+            self.drones.append(Drone(i, self.map.start_hub))
+            # self.drones[drones[i-1]] = self.map.start_hub
+        # for k, v in self.drones.items():
+        #     print(f"{k}: {v.name}")
 
     def init_hubs(self, data: Any):
         self.map.start_hub = Hub(self.parse.start_hub["name"], self.parse.start_hub["pos_x"], self.parse.start_hub["pos_y"], self.parse.start_hub["metadata"])
@@ -66,11 +75,18 @@ class Simulation():
         self.init_hubs(self.parse.hubs)
         self.init_connections(self.parse.connection)
         self.init_map()
+        self.init_drones()
 
     def run(self):
         p = Pathfinding(self.map)
-        drone = Drone(1)
-        p.find_path()
+        road = p.find_path()
+        self.flyin()
+
+    def flyin(self):
+        tour = 0
+        while self.drones_finished != self.map.nb_drones:
+            for drone in self.drones:
+                drone
 
 
 class Map():
@@ -118,10 +134,13 @@ class ZoneType(Enum):
 
 
 class Drone():
-    def __init__(self, number):
+    def __init__(self, number, start):
         self.number = number
-        self.path = []
+        self.pos = start
         self.finished = False
+
+    def go_to(self, path):
+        
 
 
 class Pathfinding():
@@ -148,11 +167,10 @@ class Pathfinding():
                 cost = self.get_cost(hub_to, hub)
                 if cost:
                     self.zone[hub_to] = cost
-                self.path[hub_to] = hub
+                    self.path[hub_to] = hub
             self.zone.pop(hub)
         self.get_full_path()
-        for i in reversed(self.path):
-            print(i.name)
+        return self.path
 
     def get_cost(self, hub_to, actual_hub):
         if hub_to.zone_type == "normal":
@@ -171,7 +189,7 @@ class Pathfinding():
         while hub != self.start:
             hub = self.path[hub]
             path.append(hub)
-        self.path = path
+        self.path = reversed(path)
 
     def get_lowest_hub(self):
         lowest_cost = min([v for k, v in self.zone.items()])
