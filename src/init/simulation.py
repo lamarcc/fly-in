@@ -11,12 +11,15 @@ class Simulation():
         self.parse = Parse()
         self.is_running = False
         self.drones = []
-        self.drones_finished = 0
+        self.drones_finished = []
+        self.drones_pos = {}
 
     def init_drones(self, road):
         # drones = []
         for i in range(1, self.map.nb_drones + 1):
-            self.drones.append(Drone(i, self.map, road))
+            drone = Drone(i, self.map, road)
+            self.drones.append(drone)
+            self.drones_pos[drone] = self.map.start_hub
             # self.drones[drones[i-1]] = self.map.start_hub
         # for k, v in self.drones.items():
         #     print(f"{k}: {v.name}")
@@ -81,17 +84,18 @@ class Simulation():
         road = p.find_path()
         self.init_drones(road)
         self.flyin(road)
+        print(self.drones[19].pos.name)
+        print(len(self.drones_finished))
+        print(len(set(self.drones_finished)))
 
     def flyin(self, path):
         tour = 0
-        while self.drones_finished != self.map.nb_drones:
+        while len(set(self.drones_finished)) < self.map.nb_drones:
             for drone in self.drones:
-                if drone.finished == True:
-                    self.drones_finished += 1
-                    print(drone.count)
+                if drone.pos == self.map.end_hub:
+                    self.drones_finished.append(drone)
                     continue
-                else:
-                    drone.go_to()
+                drone.go_to()
 
 
 class Map():
@@ -147,20 +151,20 @@ class Drone():
         self.finished = False
         self.count = 0
         self.path = road
+        if number == 20:
+            print(self.path[1].name)
+            for i in self.path:
+                print(i.name)
+            print()
 
     def go_to(self):
-        if self.path[1] in self.pos.connected_to:
-            if self.path[1].occupied:
-                self.count += 1
-                return
-            self.occupied = 0
-            self.pos = self.path[1]
-            self.pos.occupied = 1
+        if self.pos == self.map.end_hub:
+            return
+        next_move = self.path[1]
+        if next_move in self.pos.connected_to:
+            self.pos = next_move
             self.count += 1
-            if self.pos == self.map.end_hub:
-                self.finished = True
-                return
-            self.path.remove(self.pos)
+            self.path.pop(1)
 
 
 class Pathfinding():
