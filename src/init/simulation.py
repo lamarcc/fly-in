@@ -84,9 +84,6 @@ class Simulation():
         road = p.find_path()
         self.init_drones(road)
         self.flyin(road)
-        print(self.drones[19].pos.name)
-        print(len(self.drones_finished))
-        print(len(set(self.drones_finished)))
 
     def flyin(self, path):
         tour = 0
@@ -95,7 +92,8 @@ class Simulation():
                 if drone.pos == self.map.end_hub:
                     self.drones_finished.append(drone)
                     continue
-                drone.go_to()
+                else:
+                    drone.go_to()
 
 
 class Map():
@@ -150,21 +148,19 @@ class Drone():
         self.pos = map.start_hub
         self.finished = False
         self.count = 0
-        self.path = road
-        if number == 20:
-            print(self.path[1].name)
-            for i in self.path:
-                print(i.name)
-            print()
+        self.path = list(road)
 
     def go_to(self):
-        if self.pos == self.map.end_hub:
-            return
         next_move = self.path[1]
-        if next_move in self.pos.connected_to:
-            self.pos = next_move
+        if next_move.occupied:
             self.count += 1
-            self.path.pop(1)
+            return
+        self.pos.occupied = 0
+        self.pos = next_move
+        if self.pos != self.map.start_hub and self.pos != self.map.end_hub:
+            self.pos.occupied = 1
+        self.count += 1
+        self.path.pop(1)
 
 
 class Pathfinding():
