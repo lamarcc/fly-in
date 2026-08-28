@@ -15,14 +15,10 @@ class Simulation():
         self.drones_pos = {}
 
     def init_drones(self, road):
-        # drones = []
         for i in range(1, self.map.nb_drones + 1):
             drone = Drone(i, self.map, road)
             self.drones.append(drone)
             self.drones_pos[drone] = self.map.start_hub
-            # self.drones[drones[i-1]] = self.map.start_hub
-        # for k, v in self.drones.items():
-        #     print(f"{k}: {v.name}")
 
     def init_hubs(self, data: Any):
         self.map.start_hub = Hub(self.parse.start_hub["name"], self.parse.start_hub["pos_x"], self.parse.start_hub["pos_y"], self.parse.start_hub["metadata"])
