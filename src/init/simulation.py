@@ -114,6 +114,9 @@ class Hub():
     def get_connections(self):
         return self.connected_to
 
+    def get_pos(self):
+        return (self.pos_x, self.pos_y)
+
 
 class Connection():
     def __init__(self, hub_a: Hub, hub_b: Hub, data: dict):
@@ -214,40 +217,67 @@ class Visualizer():
         self.simulation = simulation
 
     def create_window(self):
-        all_coordinate = [(pos.pos_x, pos.pos_y) for pos in self.map.hubs.values()]
-        max_x = max(x for x, y in all_coordinate)
-        min_x = min(x for x, y in all_coordinate)
-        max_y = max(y for x, y in all_coordinate)
-        min_y = min(y for x, y in all_coordinate)
-        zones = [zone for zone in self.map.hubs.values()]
-        hub_r = 15
-        min_spacing = 20
-        margin = 50
-        scale = (2 * hub_r + min_spacing) / 1
-        width = (max_x - min_x) * scale + 2 * margin
-        height = (max_y - min_y) * scale + 2 * margin
+        self.all_coordinate = [(pos.pos_x, pos.pos_y) for pos in self.map.hubs.values()]
+        self.max_x = max(x for x, y in self.all_coordinate)
+        self.min_x = min(x for x, y in self.all_coordinate)
+        self.max_y = max(y for x, y in self.all_coordinate)
+        self.min_y = min(y for x, y in self.all_coordinate)
+        self.zones = [zone for zone in self.map.hubs.values()]
+        self.hub_r = 15
+        self.min_spacing = 50
+        self.margin = 50
+        self.scale = (2 * self.hub_r + self.min_spacing) / 1
+        self.width = (self.max_x - self.min_x) * self.scale + 2 * self.margin
+        self.height = (self.max_y - self.min_y) * self.scale + 2 * self.margin
 
-        screen = pygame.display.set_mode((width, height))
+        self.screen = pygame.display.set_mode((self.width, self.height))
         pygame.display.set_caption("Fly-in")
 
         clock = pygame.time.Clock()
-        print(all_coordinate)
+
+        pygame.font.init()
+        self.font = pygame.font.SysFont(None, 16)
 
         running = True
         while running:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     running = False
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_ESCAPE:
+                        running = False
 
-            screen.fill((30, 30, 30))
-            for x, y in all_coordinate:
-                pos_x = margin + (x - min_x) / (max_x - min_x) * (width - 2 * margin)
-                pos_y = margin + (y - min_y) / (max_y - min_y) * (height - 2 * margin)
-                if max_x == min_x:
-                    pos_x = width / 2
-                else:
-                    pos_x = margin + (x - min_x) / (max_x - min_x) * (width - 2 * margin)
-                pygame.draw.circle(screen, (0, 200, 0), (pos_x, pos_y), 20)
+            self.screen.fill((30, 30, 30))
+            self.draw_connection()
+            for x, y in self.all_coordinate:
+                self.draw_hub(x, y)
 
             pygame.display.flip()
             clock.tick(60)
+
+    def pixel_pos(self, x, y):
+        if self.max_x == self.min_x:
+            pos_x = self.width / 2
+        else:
+            pos_x = self.margin + (x - self.min_x) / (self.max_x - self.min_x) * (self.width - 2 * self.margin)
+        if self.max_y == self.min_y:
+            pos_y = self.height / 2
+        else:
+            pos_y = self.margin + (y - self.min_y) / (self.max_y - self.min_y) * (self.height - 2 * self.margin)
+        return pos_x, pos_y
+
+    def draw_hub(self, x, y):
+        pos_x, pos_y = self.pixel_pos(x, y)
+        pygame.draw.circle(self.screen, (0, 200, 0), (pos_x, pos_y), 20)
+        hub_name = self.font.render("test", True, (255, 255, 255))
+        pos = hub_name.get_rect(center=(pos_x, pos_y + 30))
+        self.screen.blit(hub_name, pos)
+
+    def draw_connection(self):
+        for connection in self.map.connections:
+            x, y = connection.hub_a.get_pos()
+            x1, y1 = self.pixel_pos(x, y)
+            x, y = connection.hub_b.get_pos()
+            x2, y2 = self.pixel_pos(x, y)
+            pygame.draw.line(self.screen, (255, 255, 255), (x1, y1), (x2, y2), 5)
+
