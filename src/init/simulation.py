@@ -3,12 +3,14 @@ from abc import ABC, abstractmethod
 from typing import Tuple, Any
 from .parsing import Parse
 from enum import Enum
+import pygame
 
 
 class Simulation():
     def __init__(self):
         self.map = Map()
         self.parse = Parse()
+        self.visualizer = Visualizer(self.map, self)
         self.is_running = False
         self.drones = []
         self.drones_finished = []
@@ -39,32 +41,22 @@ class Simulation():
             connection.hub_a.connected_to.append(connection.hub_b)
             connection.hub_b.connected_to.append(connection.hub_a)
 
-    def init_map(self):
-        all_coordinate = [(pos.pos_x, pos.pos_y) for pos in self.map.hubs.values()]
-        max_x = 0
-        max_y = 0
-        for x, y in all_coordinate:
-            if x > max_x:
-                max_x = x
-            if y > max_y:
-                max_y = y
-        zones = [zone for zone in self.map.hubs.values()]
-        for y in range(max_y + 1):
-            tmp = []
-            for x in range(max_x + 1):
-                tmp.append(0)
-            self.map.map.append(tmp)
-        for z in zones:
-            if z.zone_type == "normal":
-                self.map.map[z.pos_y][z.pos_x] = 1
-            elif z.zone_type == "priority":
-                self.map.map[z.pos_y][z.pos_x] = 2
-            elif z.zone_type == "restricted":
-                self.map.map[z.pos_y][z.pos_x] = 3
-            elif z.zone_type == "blocked":
-                self.map.map[z.pos_y][z.pos_x] = 4
-        for x in reversed(self.map.map):
-            print(x)
+        # for y in range(max_y + 1):
+        #     tmp = []
+        #     for x in range(max_x + 1):
+        #         tmp.append(0)
+        #     self.map.map.append(tmp)
+        # for z in zones:
+        #     if z.zone_type == "normal":
+        #         self.map.map[z.pos_y][z.pos_x] = 1
+        #     elif z.zone_type == "priority":
+        #         self.map.map[z.pos_y][z.pos_x] = 2
+        #     elif z.zone_type == "restricted":
+        #         self.map.map[z.pos_y][z.pos_x] = 3
+        #     elif z.zone_type == "blocked":
+        #         self.map.map[z.pos_y][z.pos_x] = 4
+        # for x in reversed(self.map.map):
+        #     print(x)
 
     def init_window(self):
         pass ## TODO: need to choose a visualizer for the simulation
@@ -73,7 +65,7 @@ class Simulation():
         self.map.nb_drones = self.parse.nb_drones
         self.init_hubs(self.parse.hubs)
         self.init_connections(self.parse.connection)
-        self.init_map()
+        self.visualizer.create_window()
 
     def run(self):
         p = Pathfinding(self.map)
@@ -214,3 +206,48 @@ class Pathfinding():
         lowest_cost = min([v for k, v in self.zone.items()])
         r_dict = {v: k for k, v in self.zone.items()}
         return r_dict[lowest_cost]
+
+
+class Visualizer():
+    def __init__(self, map, simulation):
+        self.map = map
+        self.simulation = simulation
+
+    def create_window(self):
+        all_coordinate = [(pos.pos_x, pos.pos_y) for pos in self.map.hubs.values()]
+        max_x = max(x for x, y in all_coordinate)
+        min_x = min(x for x, y in all_coordinate)
+        max_y = max(y for x, y in all_coordinate)
+        min_y = min(y for x, y in all_coordinate)
+        zones = [zone for zone in self.map.hubs.values()]
+        hub_r = 15
+        min_spacing = 20
+        margin = 50
+        scale = (2 * hub_r + min_spacing) / 1
+        width = (max_x - min_x) * scale + 2 * margin
+        height = (max_y - min_y) * scale + 2 * margin
+
+        screen = pygame.display.set_mode((width, height))
+        pygame.display.set_caption("Fly-in")
+
+        clock = pygame.time.Clock()
+        print(all_coordinate)
+
+        running = True
+        while running:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    running = False
+
+            screen.fill((30, 30, 30))
+            for x, y in all_coordinate:
+                pos_x = margin + (x - min_x) / (max_x - min_x) * (width - 2 * margin)
+                pos_y = margin + (y - min_y) / (max_y - min_y) * (height - 2 * margin)
+                if max_x == min_x:
+                    pos_x = width / 2
+                else:
+                    pos_x = margin + (x - min_x) / (max_x - min_x) * (width - 2 * margin)
+                pygame.draw.circle(screen, (0, 200, 0), (pos_x, pos_y), 20)
+
+            pygame.display.flip()
+            clock.tick(60)
