@@ -41,23 +41,6 @@ class Simulation():
             connection.hub_a.connected_to.append(connection.hub_b)
             connection.hub_b.connected_to.append(connection.hub_a)
 
-        # for y in range(max_y + 1):
-        #     tmp = []
-        #     for x in range(max_x + 1):
-        #         tmp.append(0)
-        #     self.map.map.append(tmp)
-        # for z in zones:
-        #     if z.zone_type == "normal":
-        #         self.map.map[z.pos_y][z.pos_x] = 1
-        #     elif z.zone_type == "priority":
-        #         self.map.map[z.pos_y][z.pos_x] = 2
-        #     elif z.zone_type == "restricted":
-        #         self.map.map[z.pos_y][z.pos_x] = 3
-        #     elif z.zone_type == "blocked":
-        #         self.map.map[z.pos_y][z.pos_x] = 4
-        # for x in reversed(self.map.map):
-        #     print(x)
-
     def init_window(self):
         pass ## TODO: need to choose a visualizer for the simulation
 
@@ -215,6 +198,31 @@ class Visualizer():
     def __init__(self, map, simulation):
         self.map = map
         self.simulation = simulation
+        self.color = {
+                "none": (200, 200, 200),
+                "red": (255, 0, 0),
+                "green": (0, 128, 0),
+                "blue": (0, 0, 255),
+                "yellow": (255, 255, 0),
+                "orange": (255, 165, 0),
+                "purple": (128, 0, 128),
+                "pink": (255, 192, 203),
+                "brown": (139, 69, 19),
+                "black": (0, 0, 0),
+                "white": (255, 255, 255),
+                "gray": (128, 128, 128),
+                "cyan": (0, 255, 255),
+                "magenta": (255, 0, 255),
+                "lime": (0, 255, 0),
+                "navy": (0, 0, 128),
+                "teal": (0, 128, 128),
+                "maroon": (128, 0, 0),
+                "gold": (255, 215, 0),
+                "darkred": (139, 0, 0),
+                "violet": (238, 130, 238),
+                "crimson": (220, 20, 60),
+                "rainbow": (255, 105, 180),
+        }
 
     def create_window(self):
         self.all_coordinate = [(pos.pos_x, pos.pos_y) for pos in self.map.hubs.values()]
@@ -223,22 +231,29 @@ class Visualizer():
         self.max_y = max(y for x, y in self.all_coordinate)
         self.min_y = min(y for x, y in self.all_coordinate)
         self.zones = [zone for zone in self.map.hubs.values()]
-        self.hub_r = 15
-        self.min_spacing = 50
-        self.margin = 50
+        self.hub_r = 10
+        self.min_spacing = 40
+        self.margin = 100
         self.scale = (2 * self.hub_r + self.min_spacing) / 1
         self.width = (self.max_x - self.min_x) * self.scale + 2 * self.margin
         self.height = (self.max_y - self.min_y) * self.scale + 2 * self.margin
+        self.image = []
 
         self.screen = pygame.display.set_mode((self.width, self.height))
         pygame.display.set_caption("Fly-in")
-
-        clock = pygame.time.Clock()
 
         pygame.font.init()
         self.font = pygame.font.SysFont(None, 16)
 
         running = True
+
+        self.img = pygame.Surface((self.width, self.height), pygame.SRCALPHA)
+
+        self.screen.fill((30, 30, 30))
+        self.draw_map()
+
+        pygame.draw.circle(self.img, self.color['purple'], (30, 30), 20)
+        self.image.append(self.img)
         while running:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
@@ -246,14 +261,12 @@ class Visualizer():
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_ESCAPE:
                         running = False
-
-            self.screen.fill((30, 30, 30))
-            self.draw_connection()
-            for x, y in self.all_coordinate:
-                self.draw_hub(x, y)
+                    if event.key == pygame.K_RIGHT:
+                        draw_drone()
+                        # self.screen.blit(self.image[0], (500, 200))
 
             pygame.display.flip()
-            clock.tick(60)
+
 
     def pixel_pos(self, x, y):
         if self.max_x == self.min_x:
@@ -266,12 +279,17 @@ class Visualizer():
             pos_y = self.margin + (y - self.min_y) / (self.max_y - self.min_y) * (self.height - 2 * self.margin)
         return pos_x, pos_y
 
-    def draw_hub(self, x, y):
-        pos_x, pos_y = self.pixel_pos(x, y)
-        pygame.draw.circle(self.screen, (0, 200, 0), (pos_x, pos_y), 20)
-        hub_name = self.font.render("test", True, (255, 255, 255))
-        pos = hub_name.get_rect(center=(pos_x, pos_y + 30))
-        self.screen.blit(hub_name, pos)
+    def draw_hub(self):
+        for hub in self.map.hubs.values():
+            pos_x, pos_y = self.pixel_pos(hub.pos_x, hub.pos_y)
+            pygame.draw.circle(self.screen, self.color[hub.color], (pos_x, pos_y), 20)
+            name = self.contract_name(hub.name)
+            hub_name = self.font.render(name, True, (255, 255, 255))
+            shadow = self.font.render(name, True, self.color['black'])
+            text_pos = hub_name.get_rect(center=(pos_x, pos_y - 8))
+            shadow_pos = shadow.get_rect(center=(pos_x + 1, pos_y - 6))
+            self.screen.blit(shadow, shadow_pos)
+            self.screen.blit(hub_name, text_pos)
 
     def draw_connection(self):
         for connection in self.map.connections:
@@ -279,5 +297,21 @@ class Visualizer():
             x1, y1 = self.pixel_pos(x, y)
             x, y = connection.hub_b.get_pos()
             x2, y2 = self.pixel_pos(x, y)
-            pygame.draw.line(self.screen, (255, 255, 255), (x1, y1), (x2, y2), 5)
+            pygame.draw.line(self.screen, (100, 100, 100), (x1, y1), (x2, y2), 2)
 
+    def draw_map(self):
+        self.draw_connection()
+        self.draw_hub()
+
+    def contract_name(self, name):
+        if len(name) > 2:
+            character = list(name[0])
+            number = [i for i in name if i.isdigit()]
+        return ''.join(character+number).upper()
+
+    def draw_drone(self):
+        pass
+
+    def draw_image(self):
+        self.draw_connection()
+        self.draw_hub()
