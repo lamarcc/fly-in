@@ -20,7 +20,6 @@ class Simulation():
         for i in range(1, self.map.nb_drones + 1):
             drone = Drone(i, self.map, road)
             self.drones.append(drone)
-            self.drones_pos[drone] = self.map.start_hub
 
     def init_hubs(self, data: Any):
         self.map.start_hub = Hub(self.parse.start_hub["name"], self.parse.start_hub["pos_x"], self.parse.start_hub["pos_y"], self.parse.start_hub["metadata"])
@@ -48,7 +47,6 @@ class Simulation():
         self.map.nb_drones = self.parse.nb_drones
         self.init_hubs(self.parse.hubs)
         self.init_connections(self.parse.connection)
-        self.visualizer.create_window()
 
     def run(self):
         p = Pathfinding(self.map)
@@ -57,14 +55,16 @@ class Simulation():
         self.flyin(road)
 
     def flyin(self, path):
-        tour = 0
+        lap = 0
+        # print(self.map.nb_drones)
         while len(set(self.drones_finished)) < self.map.nb_drones:
             for drone in self.drones:
+                drone.go_to()
                 if drone.pos == self.map.end_hub:
                     self.drones_finished.append(drone)
-                    continue
-                else:
-                    drone.go_to()
+            lap += 1
+            self.drones_pos[f'Lap{lap}'] = [drone.pos.name for drone in self.drones]
+        self.visualizer.create_window(self.drones_pos)
 
 
 class Map():
@@ -125,6 +125,8 @@ class Drone():
         self.path = list(road)
 
     def go_to(self):
+        if self.pos == self.map.end_hub:
+            return
         next_move = self.path[1]
         if next_move.occupied:
             self.count += 1
@@ -224,7 +226,7 @@ class Visualizer():
                 "rainbow": (255, 105, 180),
         }
 
-    def create_window(self):
+    def create_window(self, movement_history):
         self.all_coordinate = [(pos.pos_x, pos.pos_y) for pos in self.map.hubs.values()]
         self.max_x = max(x for x, y in self.all_coordinate)
         self.min_x = min(x for x, y in self.all_coordinate)
@@ -247,13 +249,14 @@ class Visualizer():
 
         running = True
 
-        self.img = pygame.Surface((self.width, self.height), pygame.SRCALPHA)
+        for i in range(len(movement_history.keys())):
+            img = pygame.Surface((self.width, self.height), pygame.SRCALPHA)
+            self.image.append(img)
 
         self.screen.fill((30, 30, 30))
         self.draw_map()
+        self.draw_drones(movement_history)
 
-        pygame.draw.circle(self.img, self.color['purple'], (30, 30), 20)
-        self.image.append(self.img)
         while running:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
@@ -262,8 +265,11 @@ class Visualizer():
                     if event.key == pygame.K_ESCAPE:
                         running = False
                     if event.key == pygame.K_RIGHT:
-                        draw_drone()
-                        # self.screen.blit(self.image[0], (500, 200))
+                        idx += 1
+                        self.screen.blit(self.image[idx], (0, 0))
+                    if event.key == pygame.K_LEFT:
+                        idx -= 1
+                        self.screen.blit(self.image[idx], (0, 0))
 
             pygame.display.flip()
 
@@ -309,8 +315,12 @@ class Visualizer():
             number = [i for i in name if i.isdigit()]
         return ''.join(character+number).upper()
 
-    def draw_drone(self):
-        pass
+    def draw_drone(self, movement_history):
+        for img in self.image:
+            for drone_pos in 
+            pos_x, pos_y = self.pixel_pos(hub.pos_x, hub.pos_y)
+            pygame.draw.circle(self.screen, self.color[hub.color], (pos_x, pos_y), 20)
+
 
     def draw_image(self):
         self.draw_connection()
