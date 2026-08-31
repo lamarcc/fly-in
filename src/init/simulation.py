@@ -56,14 +56,15 @@ class Simulation():
 
     def flyin(self, path):
         lap = 0
-        # print(self.map.nb_drones)
+        self.drones_pos[f'Lap{lap}'] = {drone.number: drone.pos for drone in self.drones}
         while len(set(self.drones_finished)) < self.map.nb_drones:
             for drone in self.drones:
                 drone.go_to()
                 if drone.pos == self.map.end_hub:
                     self.drones_finished.append(drone)
+                    print(drone.count)
             lap += 1
-            self.drones_pos[f'Lap{lap}'] = [drone.pos.name for drone in self.drones]
+            self.drones_pos[f'Lap{lap}'] = {drone.number: drone.pos for drone in self.drones}
         self.visualizer.create_window(self.drones_pos)
 
 
@@ -135,7 +136,10 @@ class Drone():
         self.pos = next_move
         if self.pos != self.map.start_hub and self.pos != self.map.end_hub:
             self.pos.occupied = 1
-        self.count += 1
+        if self.pos.zone_type == "restricted":
+            self.count += 2
+        else:
+            self.count += 1
         self.path.pop(1)
 
 
@@ -248,15 +252,19 @@ class Visualizer():
         self.font = pygame.font.SysFont(None, 16)
 
         running = True
-
-        for i in range(len(movement_history.keys())):
+        lapmax = len(movement_history.keys())
+        for i in range(lapmax):
             img = pygame.Surface((self.width, self.height), pygame.SRCALPHA)
             self.image.append(img)
 
+        self.background = pygame.Surface((self.width, self.height), pygame.SRCALPHA)
         self.screen.fill((30, 30, 30))
         self.draw_map()
         self.draw_drones(movement_history)
+        self.screen.blit(self.background, (0, 0))
+        self.screen.blit(self.image[0], (0, 0))
 
+        idx = 0
         while running:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
@@ -265,10 +273,20 @@ class Visualizer():
                     if event.key == pygame.K_ESCAPE:
                         running = False
                     if event.key == pygame.K_RIGHT:
+                        print(idx)
                         idx += 1
+                        if idx >= lapmax:
+                            idx = lapmax - 1
+                        self.screen.fill((30, 30, 30))
+                        self.screen.blit(self.background, (0, 0))
                         self.screen.blit(self.image[idx], (0, 0))
                     if event.key == pygame.K_LEFT:
+                        print(idx)
+                        if idx <= 0:
+                            continue
                         idx -= 1
+                        self.screen.fill((30, 30, 30))
+                        self.screen.blit(self.background, (0, 0))
                         self.screen.blit(self.image[idx], (0, 0))
 
             pygame.display.flip()
@@ -288,14 +306,14 @@ class Visualizer():
     def draw_hub(self):
         for hub in self.map.hubs.values():
             pos_x, pos_y = self.pixel_pos(hub.pos_x, hub.pos_y)
-            pygame.draw.circle(self.screen, self.color[hub.color], (pos_x, pos_y), 20)
+            pygame.draw.circle(self.background, self.color[hub.color], (pos_x, pos_y), 25)
             name = self.contract_name(hub.name)
             hub_name = self.font.render(name, True, (255, 255, 255))
             shadow = self.font.render(name, True, self.color['black'])
-            text_pos = hub_name.get_rect(center=(pos_x, pos_y - 8))
-            shadow_pos = shadow.get_rect(center=(pos_x + 1, pos_y - 6))
-            self.screen.blit(shadow, shadow_pos)
-            self.screen.blit(hub_name, text_pos)
+            text_pos = hub_name.get_rect(center=(pos_x, pos_y - 12))
+            shadow_pos = shadow.get_rect(center=(pos_x + 1, pos_y - 10))
+            self.background.blit(shadow, shadow_pos)
+            self.background.blit(hub_name, text_pos)
 
     def draw_connection(self):
         for connection in self.map.connections:
@@ -303,7 +321,7 @@ class Visualizer():
             x1, y1 = self.pixel_pos(x, y)
             x, y = connection.hub_b.get_pos()
             x2, y2 = self.pixel_pos(x, y)
-            pygame.draw.line(self.screen, (100, 100, 100), (x1, y1), (x2, y2), 2)
+            pygame.draw.line(self.background, (100, 100, 100), (x1, y1), (x2, y2), 2)
 
     def draw_map(self):
         self.draw_connection()
@@ -315,13 +333,14 @@ class Visualizer():
             number = [i for i in name if i.isdigit()]
         return ''.join(character+number).upper()
 
-    def draw_drone(self, movement_history):
+    def draw_drones(self, lap_history):
+        i = 0
         for img in self.image:
-            for drone_pos in 
-            pos_x, pos_y = self.pixel_pos(hub.pos_x, hub.pos_y)
-            pygame.draw.circle(self.screen, self.color[hub.color], (pos_x, pos_y), 20)
-
-
-    def draw_image(self):
-        self.draw_connection()
-        self.draw_hub()
+            for d_number, d_pos in lap_history[f'Lap{i}'].items():
+                pos_x, pos_y = self.pixel_pos(d_pos.pos_x, d_pos.pos_y)
+                pygame.draw.circle(img, (150, 150, 150), (pos_x, pos_y + 7), 10)
+                pygame.draw.circle(img, (230, 230, 230), (pos_x, pos_y + 7), 8)
+                text = self.font.render(str(d_number), True, self.color['black'])
+                pos = text.get_rect(center=(pos_x, pos_y + 7))
+                img.blit(text, pos)
+            i += 1
