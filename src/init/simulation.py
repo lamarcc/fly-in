@@ -34,9 +34,12 @@ class Simulation():
 
     def init_connections(self, data: Any):
         for info in data:
-            connection = Connection(self.map.hubs[info["hub_a"]], self.map.hubs[info["hub_b"]], info["metadata"])
-            self.map.connections.append(connection)
-        for connection in self.map.connections:
+            hub_a = self.map.hubs[info['hub_a']]
+            hub_b = self.map.hubs[info['hub_b']]
+            name = f'{hub_a.name}-{hub_b.name}'
+            connection = Connection(name, hub_a, hub_b, info["metadata"])
+            self.map.connections[name] = connection
+        for connection in self.map.connections.values():
             connection.hub_a.connected_to.append(connection.hub_b)
             connection.hub_b.connected_to.append(connection.hub_a)
 
@@ -66,6 +69,10 @@ class Simulation():
             lap += 1
             self.drones_pos[f'Lap{lap}'] = {drone.number: drone.pos for drone in self.drones}
         self.visualizer.create_window(self.drones_pos)
+        for k, v in self.drones_pos.items():
+            print(k)
+            for a, b in v.items():
+                print(f'{a} in {b.name}')
 
 
 class Map():
@@ -75,7 +82,7 @@ class Map():
         self.start_hub = None
         self.end_hub = None
         self.hubs = {}
-        self.connections = []
+        self.connections = {}
 
 
 class Hub():
@@ -103,10 +110,12 @@ class Hub():
 
 
 class Connection():
-    def __init__(self, hub_a: Hub, hub_b: Hub, data: dict):
+    def __init__(self, name, hub_a: Hub, hub_b: Hub, data: dict):
+        self.name = name
         self.hub_a = hub_a
         self.hub_b = hub_b
         self.max_capacity = data["max_link_capacity"]
+        self.occupied = 0
 
 
 class ZoneType(Enum):
@@ -132,15 +141,18 @@ class Drone():
         if next_move.occupied:
             self.count += 1
             return
-        self.pos.occupied = 0
-        self.pos = next_move
+        if next_move.zone_type == "restricted" and not isinstance(self.pos, Connection):
+            for name in self.map.connections.keys():
+                if self.pos.name in name and next_move.name in name:
+                    self.pos.occupied = 0
+                    self.pos = self.map.connections[name]
+        else:
+            self.pos.occupied = 0
+            self.pos = next_move
+            self.path.pop(0)
         if self.pos != self.map.start_hub and self.pos != self.map.end_hub:
             self.pos.occupied = 1
-        if self.pos.zone_type == "restricted":
-            self.count += 2
-        else:
-            self.count += 1
-        self.path.pop(1)
+        self.count += 1
 
 
 class Pathfinding():
@@ -266,6 +278,9 @@ class Visualizer():
 
         idx = 0
         while running:
+            both = pygame.key.get_pressed()
+            if both[pygame.K_UP] and both[pygame.K_DOWN]:
+                print("COUCOU") #faire le fastforward, pour avancer plus vite que image par image
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     running = False
@@ -316,7 +331,7 @@ class Visualizer():
             self.background.blit(hub_name, text_pos)
 
     def draw_connection(self):
-        for connection in self.map.connections:
+        for connection in self.map.connections.values():
             x, y = connection.hub_a.get_pos()
             x1, y1 = self.pixel_pos(x, y)
             x, y = connection.hub_b.get_pos()
@@ -337,10 +352,17 @@ class Visualizer():
         i = 0
         for img in self.image:
             for d_number, d_pos in lap_history[f'Lap{i}'].items():
-                pos_x, pos_y = self.pixel_pos(d_pos.pos_x, d_pos.pos_y)
-                pygame.draw.circle(img, (150, 150, 150), (pos_x, pos_y + 7), 10)
-                pygame.draw.circle(img, (230, 230, 230), (pos_x, pos_y + 7), 8)
-                text = self.font.render(str(d_number), True, self.color['black'])
-                pos = text.get_rect(center=(pos_x, pos_y + 7))
-                img.blit(text, pos)
+                if isinstance(d_pos, Connection):
+                    a_x, a_y = d_pos.hub_a.get_pos()
+                    b_x, b_y = d_pos.hub_b.get_pos()
+                    x1, y1 = self.pixel_pos(a_x, a_y)
+                    x2, y2 = self.pixel_pos(b_x, b_y)
+                    pygame.draw.line(img, (255, 255, 255), (x1, y1), (x2, y2), 2)
+                else:
+                    pos_x, pos_y = self.pixel_pos(d_pos.pos_x, d_pos.pos_y)
+                    pygame.draw.circle(img, (150, 150, 150), (pos_x, pos_y + 7), 10)
+                    pygame.draw.circle(img, (230, 230, 230), (pos_x, pos_y + 7), 8)
+                    text = self.font.render(str(d_number), True, self.color['black'])
+                    pos = text.get_rect(center=(pos_x, pos_y + 7))
+                    img.blit(text, pos)
             i += 1
