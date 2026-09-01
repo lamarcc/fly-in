@@ -77,6 +77,7 @@ class Parse():
         elif key == "start_hub":
             if not self.start_hub:
                 self.start_hub = self.parse_hub(info)
+                self.start_hub['metadata']['max_drones'] = self.nb_drones
                 self.try_position(self.start_hub)
                 self.hubs.append(self.start_hub)
             else:
@@ -84,6 +85,7 @@ class Parse():
         elif key == "end_hub":
             if not self.end_hub:
                 self.end_hub = self.parse_hub(info)
+                self.end_hub['metadata']['max_drones'] = self.nb_drones
                 self.try_position(self.end_hub)
                 self.hubs.append(self.end_hub)
             else:

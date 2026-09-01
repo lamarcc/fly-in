@@ -65,7 +65,6 @@ class Simulation():
                 drone.go_to()
                 if drone.pos == self.map.end_hub:
                     self.drones_finished.append(drone)
-                    print(drone.count)
             lap += 1
             self.drones_pos[f'Lap{lap}'] = {drone.number: drone.pos for drone in self.drones}
         self.visualizer.create_window(self.drones_pos)
@@ -108,6 +107,12 @@ class Hub():
     def get_pos(self):
         return (self.pos_x, self.pos_y)
 
+    def check_capacity(self):
+        if self.occupied + 1 <= self.max_capacity:
+            return True
+        else:
+            return False
+
 
 class Connection():
     def __init__(self, name, hub_a: Hub, hub_b: Hub, data: dict):
@@ -116,6 +121,12 @@ class Connection():
         self.hub_b = hub_b
         self.max_capacity = data["max_link_capacity"]
         self.occupied = 0
+
+    def check_capacity(self):
+        if self.occupied + 1 <= self.max_capacity:
+            return True
+        else:
+            return False
 
 
 class ZoneType(Enum):
@@ -138,20 +149,34 @@ class Drone():
         if self.pos == self.map.end_hub:
             return
         next_move = self.path[1]
-        if next_move.occupied:
-            self.count += 1
-            return
-        if next_move.zone_type == "restricted" and not isinstance(self.pos, Connection):
+        if isinstance(self.pos, Hub) and next_move.zone_type == "restricted":
             for name in self.map.connections.keys():
                 if self.pos.name in name and next_move.name in name:
-                    self.pos.occupied = 0
-                    self.pos = self.map.connections[name]
-        else:
-            self.pos.occupied = 0
+                    connection = self.map.connections[name]
+                    if not connection.check_capacity():
+                        self.count += 1
+                        return
+                    self.pos.occupied -= 1
+                    self.pos = connection
+                    self.pos.occupied += 1
+                    self.count += 1
+                    return
+        if isinstance(self.pos, Connection):
+            if not next_move.check_capacity():
+                self.count += 1
+                return
+            self.pos.occupied -= 1
             self.pos = next_move
-            self.path.pop(0)
-        if self.pos != self.map.start_hub and self.pos != self.map.end_hub:
-            self.pos.occupied = 1
+            self.pos.occupied += 1
+            self.path.pop(1)
+            return
+        if not next_move.check_capacity():
+            self.count += 1
+            return
+        self.pos.occupied -= 1
+        self.pos = next_move
+        self.pos.occupied += 1
+        self.path.pop(1)
         self.count += 1
 
 
