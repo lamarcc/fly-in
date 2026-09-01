@@ -61,6 +61,8 @@ class Simulation():
         lap = 0
         self.drones_pos[f'Lap{lap}'] = {drone.number: drone.pos for drone in self.drones}
         while len(set(self.drones_finished)) < self.map.nb_drones:
+            for connection in self.map.connections.values():
+                connection.passed = 0
             for drone in self.drones:
                 drone.go_to()
                 if drone.pos == self.map.end_hub:
@@ -121,6 +123,7 @@ class Connection():
         self.hub_b = hub_b
         self.max_capacity = data["max_link_capacity"]
         self.occupied = 0
+        self.passed = 0
 
     def check_capacity(self):
         if self.occupied + 1 <= self.max_capacity:
@@ -158,6 +161,7 @@ class Drone():
                         return
                     self.pos.occupied -= 1
                     self.pos = connection
+                    connection.passed += 1
                     self.pos.occupied += 1
                     self.count += 1
                     return
@@ -173,6 +177,13 @@ class Drone():
         if not next_move.check_capacity():
             self.count += 1
             return
+        for name in self.map.connections.keys():
+            if self.pos.name in name and next_move.name in name:
+                connection = self.map.connections[name]
+                if connection.passed >= connection.max_capacity:
+                    self.count += 1
+                    return
+        connection.passed += 1
         self.pos.occupied -= 1
         self.pos = next_move
         self.pos.occupied += 1
