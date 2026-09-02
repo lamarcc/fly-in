@@ -4,6 +4,7 @@ from typing import Tuple, Any
 from .parsing import Parse
 from enum import Enum
 import pygame
+import time
 
 
 class Simulation():
@@ -43,9 +44,6 @@ class Simulation():
             connection.hub_a.connected_to.append(connection.hub_b)
             connection.hub_b.connected_to.append(connection.hub_a)
 
-    def init_window(self):
-        pass ## TODO: need to choose a visualizer for the simulation
-
     def init(self):
         self.map.nb_drones = self.parse.nb_drones
         self.init_hubs(self.parse.hubs)
@@ -70,10 +68,6 @@ class Simulation():
             lap += 1
             self.drones_pos[f'Lap{lap}'] = {drone.number: drone.pos for drone in self.drones}
         self.visualizer.create_window(self.drones_pos)
-        for k, v in self.drones_pos.items():
-            print(k)
-            for a, b in v.items():
-                print(f'{a} in {b.name}')
 
 
 class Map():
@@ -218,7 +212,6 @@ class Pathfinding():
                     self.path[hub_to] = hub
             self.zone.pop(hub)
         return self.get_full_path()
-        # return self.path
 
     def get_cost(self, hub_to, actual_hub):
         if hub_to.zone_type == "normal":
@@ -297,11 +290,9 @@ class Visualizer():
         pygame.display.set_caption("Fly-in")
 
         pygame.font.init()
-        self.font = pygame.font.SysFont(None, 16)
 
-        running = True
-        lapmax = len(movement_history.keys())
-        for i in range(lapmax):
+        self.lapmax = len(movement_history.keys())
+        for i in range(self.lapmax):
             img = pygame.Surface((self.width, self.height), pygame.SRCALPHA)
             self.image.append(img)
 
@@ -309,14 +300,24 @@ class Visualizer():
         self.screen.fill((30, 30, 30))
         self.draw_map()
         self.draw_drones(movement_history)
-        self.screen.blit(self.background, (0, 0))
-        self.screen.blit(self.image[0], (0, 0))
 
-        idx = 0
+        self.idx = 0
+        self.build_image()
+        running = True
         while running:
-            both = pygame.key.get_pressed()
-            if both[pygame.K_UP] and both[pygame.K_DOWN]:
-                print("COUCOU") #faire le fastforward, pour avancer plus vite que image par image
+            pressed = pygame.key.get_pressed()
+            if pressed[pygame.K_UP]:
+                self.idx += 1
+                if self.idx >= self.lapmax:
+                    self.idx = self.lapmax - 1
+                self.build_image()
+                time.sleep(0.1)
+            if pressed[pygame.K_DOWN]:
+                self.idx -= 1
+                if self.idx <= 0:
+                    self.idx = 0
+                self.build_image()
+                time.sleep(0.1)
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     running = False
@@ -324,24 +325,33 @@ class Visualizer():
                     if event.key == pygame.K_ESCAPE:
                         running = False
                     if event.key == pygame.K_RIGHT:
-                        print(idx)
-                        idx += 1
-                        if idx >= lapmax:
-                            idx = lapmax - 1
-                        self.screen.fill((30, 30, 30))
-                        self.screen.blit(self.background, (0, 0))
-                        self.screen.blit(self.image[idx], (0, 0))
+                        self.idx += 1
+                        if self.idx >= self.lapmax:
+                            self.idx = self.lapmax - 1
+                        self.build_image()
                     if event.key == pygame.K_LEFT:
-                        print(idx)
-                        if idx <= 0:
+                        if self.idx <= 0:
                             continue
-                        idx -= 1
-                        self.screen.fill((30, 30, 30))
-                        self.screen.blit(self.background, (0, 0))
-                        self.screen.blit(self.image[idx], (0, 0))
-
+                        self.idx -= 1
+                        self.build_image()
             pygame.display.flip()
 
+    def print_text(self, text, size, pos):
+        font = pygame.font.SysFont(None, size)
+        show_text = font.render(text, True, self.color['white'])
+        self.screen.blit(show_text, pos)
+
+    def print_info(self):
+        self.print_text(f'{self.idx} / {self.lapmax - 1}', 30, (20, 20))
+        self.print_text("Escape: Close window", 20, (20, self.height - 70))
+        self.print_text("Left-Right: Previous/Next Image", 20, (20, self.height - 50))
+        self.print_text("Up-Down: Previous/Next Fast play", 20, (20, self.height - 30))
+
+    def build_image(self):
+        self.screen.fill((30, 30, 30))
+        self.print_info()
+        self.screen.blit(self.background, (0, 0))
+        self.screen.blit(self.image[self.idx], (0, 0))
 
     def pixel_pos(self, x, y):
         if self.max_x == self.min_x:
@@ -354,13 +364,20 @@ class Visualizer():
             pos_y = self.margin + (y - self.min_y) / (self.max_y - self.min_y) * (self.height - 2 * self.margin)
         return pos_x, pos_y
 
+    def contract_name(self, name):
+        if len(name) > 2:
+            character = list(name[0])
+            number = [i for i in name if i.isdigit()]
+        return ''.join(character+number).upper()
+
     def draw_hub(self):
+        h_text = pygame.font.SysFont(None, 16)
         for hub in self.map.hubs.values():
             pos_x, pos_y = self.pixel_pos(hub.pos_x, hub.pos_y)
             pygame.draw.circle(self.background, self.color[hub.color], (pos_x, pos_y), 25)
             name = self.contract_name(hub.name)
-            hub_name = self.font.render(name, True, (255, 255, 255))
-            shadow = self.font.render(name, True, self.color['black'])
+            hub_name = h_text.render(name, True, (255, 255, 255))
+            shadow = h_text.render(name, True, self.color['black'])
             text_pos = hub_name.get_rect(center=(pos_x, pos_y - 12))
             shadow_pos = shadow.get_rect(center=(pos_x + 1, pos_y - 10))
             self.background.blit(shadow, shadow_pos)
@@ -378,14 +395,9 @@ class Visualizer():
         self.draw_connection()
         self.draw_hub()
 
-    def contract_name(self, name):
-        if len(name) > 2:
-            character = list(name[0])
-            number = [i for i in name if i.isdigit()]
-        return ''.join(character+number).upper()
-
     def draw_drones(self, lap_history):
         i = 0
+        d_text = pygame.font.SysFont(None, 16)
         for img in self.image:
             for d_number, d_pos in lap_history[f'Lap{i}'].items():
                 if isinstance(d_pos, Connection):
@@ -398,7 +410,7 @@ class Visualizer():
                     pos_x, pos_y = self.pixel_pos(d_pos.pos_x, d_pos.pos_y)
                     pygame.draw.circle(img, (150, 150, 150), (pos_x, pos_y + 7), 10)
                     pygame.draw.circle(img, (230, 230, 230), (pos_x, pos_y + 7), 8)
-                    text = self.font.render(str(d_number), True, self.color['black'])
+                    text = d_text.render(str(d_number), True, self.color['black'])
                     pos = text.get_rect(center=(pos_x, pos_y + 7))
                     img.blit(text, pos)
             i += 1
