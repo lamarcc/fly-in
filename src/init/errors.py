@@ -30,7 +30,7 @@ class MapFileError(Exception):
 
     def msg(line, message):
         error = Colors.FAIL + Colors.BOLD + "[MapFileError] " + Colors.ENDC + Colors.BOLD + f"Line {line}: "
-        return error + message + Colors.ENDC
+        return error + Colors.ENDC + message
 
     def warning(line, message):
         warning = Colors.WARNING + Colors.BOLD + "[MapFileWarning] " + Colors.ENDC + Colors.BOLD + f"Line {line}: "
@@ -104,3 +104,11 @@ class ConnectionError(MapFileError):
     def __str__(self):
         error = super().__str__()
         return error + self.message
+
+class PathfindingError(Exception):
+    def __init__(self, message):
+        self.message = message
+
+    def __str__(self):
+        error_type = Colors.FAIL + Colors.BOLD + "[PathfindingError] " + Colors.ENDC + Colors.BOLD
+        return error_type + self.message + Colors.ENDC

@@ -16,7 +16,8 @@ class Color():
 
 class Parse():
     def __init__(self):
-        self.nb_drones = 0
+        self.nb_drones = None
+        self.nb_drones_check = 0
         self.start_hub = {}
         self.end_hub = {}
         self.hubs = []
@@ -41,6 +42,9 @@ class Parse():
                     info = info.strip().lower()
                     self.check_line(key, info)
                     self.parse_key_info(key, info)
+                    if self.nb_drones_check == 0:
+                        self.err.append(errors.MapFileError.msg(self.nb_line, "<nb_drones> must be the first parameter defined"))
+                        self.nb_drones_check = 1
                 except ValueError:
                     print(errors.MapFileError.msg(self.nb_line, "No key found (':' missing)"))
                 except errors.MapFileError as e:
@@ -66,14 +70,15 @@ class Parse():
     def parse_key_info(self, key: str, info: str):
         if key == "nb_drones":
             try:
-                if self.nb_drones == 0:
+                if self.nb_drones == None:
                     if int(info) < 1:
                         raise errors.InvalidValue(self.nb_line, "Cant have less than 1 drone")
                     self.nb_drones = int(info)
+                    self.nb_drones_check = 1
                 else:
                     raise errors.DoublonError(self.nb_line, key)
             except ValueError:
-                raise errors.InvalidValue(self.nb_line, "'nb_drones' value need to be an integer")
+                raise errors.InvalidValue(self.nb_line, "<nb_drones> value need to be an integer")
         elif key == "start_hub":
             if not self.start_hub:
                 self.start_hub = self.parse_hub(info)
@@ -117,8 +122,6 @@ class Parse():
                     self.err.append(errors.HubError(self.nb_line, f"Position <{x}, {y}> already occupied by Hub: {verif['name']}"))
             hub_info["pos_x"] = int(hub_info["pos_x"])
             hub_info["pos_y"] = int(hub_info["pos_y"])
-            # if hub_info["pos_x"] < 0 or hub_info["pos_y"] < 0:
-            #     self.err.append(errors.InvalidValue(self.nb_line, "Invalid coordinates, minimum is 0"))
         except ValueError:
             raise errors.HubError(self.nb_line, f"Undefined '{hub_info['name']}' hub position")
 
@@ -172,8 +175,8 @@ class Parse():
                 new_metadata["color"] = "grey"
             if "max_drones" in new_metadata:
                 new_metadata["max_drones"] = int(new_metadata["max_drones"])
-                if new_metadata["max_drones"] < 1:
-                    self.err.append(errors.InvalidValue(self.nb_line, "Invalid 'max_drones' value, minimum is 1"))
+                if new_metadata["max_drones"] < 0:
+                    self.err.append(errors.InvalidValue(self.nb_line, "Invalid 'max_drones' value, minimum is 0"))
         except ValueError:
             self.err.append(errors.InvalidValue(self.nb_line, "Invalid 'max_drones' value"))
         return new_metadata
@@ -206,8 +209,8 @@ class Parse():
                 if len(invalid_data):
                     self.err.append(errors.MetadataError(self.nb_line, f"Unknown metadata '{invalid_data}'"))
                 metadata["max_link_capacity"] = int(metadata["max_link_capacity"])
-                if metadata["max_link_capacity"] < 1:
-                    self.err.append(errors.InvalidValue(self.nb_line, "Invalid 'max_link_capacity' value, minimum is 1"))
+                if metadata["max_link_capacity"] < 0:
+                    self.err.append(errors.InvalidValue(self.nb_line, "Invalid 'max_link_capacity' value, minimum is 0"))
             except ValueError:
                 self.err.append(errors.ConnectionError(self.nb_line, "Value need to be an integer for 'max_link_capacity'"))
             return {"hub_a": link[0], "hub_b": link[1], "metadata": metadata}

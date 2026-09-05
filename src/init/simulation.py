@@ -5,6 +5,7 @@ from .parsing import Parse
 from enum import Enum
 import pygame
 import time
+from .errors import PathfindingError
 
 
 class Simulation():
@@ -191,6 +192,7 @@ class Pathfinding():
         self.end = map.end_hub
         self.path = {}
         self.zone = {}
+        self.path_found = False
         for hub in map.hubs.values():
             if hub.zone_type == "blocked":
                 continue
@@ -201,6 +203,7 @@ class Pathfinding():
 
     def find_path(self):
         r_zone = {}
+        hub_finished = []
         while len(self.zone.keys()) != 0:
             hub = self.get_lowest_hub()
             for hub_to in hub.connected_to:
@@ -211,6 +214,9 @@ class Pathfinding():
                     self.zone[hub_to] = cost
                     self.path[hub_to] = hub
             self.zone.pop(hub)
+        full_path = self.get_full_path()
+        if self.path_found == False:
+            raise PathfindingError("No valid path found")
         return self.get_full_path()
 
     def get_cost(self, hub_to, actual_hub):
@@ -223,17 +229,23 @@ class Pathfinding():
         elif hub_to.zone_type == "restricted":
             if self.zone[actual_hub] + 2 < self.zone[hub_to]:
                 return self.zone[actual_hub] + 2
-        
+
     def get_full_path(self):
-        hub = self.end
-        path = [hub]
-        t = []
-        while hub != self.start:
-            hub = self.path[hub]
-            path.append(hub)
-        for i in reversed(path):
-            t.append(i)
-        return t
+        for hubs in self.path.keys():
+            hub = hubs
+            path = [hub]
+        full_path = []
+        if len(self.path):
+            while hub != self.start:
+                hub = self.path[hub]
+                path.append(hub)
+            for i in reversed(path):
+                full_path.append(i)
+            if self.end in full_path:
+                self.path_found = True
+            return full_path
+        else:
+            return [self.start]
 
     def get_lowest_hub(self):
         lowest_cost = min([v for k, v in self.zone.items()])
@@ -278,10 +290,10 @@ class Visualizer():
         self.max_y = max(y for x, y in self.all_coordinate)
         self.min_y = min(y for x, y in self.all_coordinate)
         self.zones = [zone for zone in self.map.hubs.values()]
-        self.hub_r = 10
-        self.min_spacing = 40
+        self.hub_r = 50
+        self.min_spacing = 50
         self.margin = 100
-        self.scale = (2 * self.hub_r + self.min_spacing) / 1
+        self.scale = (2 * self.hub_r + self.min_spacing) / 0.8
         self.width = (self.max_x - self.min_x) * self.scale + 2 * self.margin
         self.height = (self.max_y - self.min_y) * self.scale + 2 * self.margin
         self.image = []
@@ -342,10 +354,10 @@ class Visualizer():
         self.screen.blit(show_text, pos)
 
     def print_info(self):
-        self.print_text(f'{self.idx} / {self.lapmax - 1}', 30, (20, 20))
+        self.print_text(f'{self.idx} / {self.lapmax - 1}', 60, (20, 20))
         self.print_text("Escape: Close window", 20, (20, self.height - 70))
-        self.print_text("Left-Right: Previous/Next Image", 20, (20, self.height - 50))
-        self.print_text("Up-Down: Previous/Next Fast play", 20, (20, self.height - 30))
+        self.print_text("Left-Right Arrow: Previous/Next Image", 20, (20, self.height - 50))
+        self.print_text("Down-Up Arrow: Previous/Next Fast play", 20, (20, self.height - 30))
 
     def build_image(self):
         self.screen.fill((30, 30, 30))
@@ -374,7 +386,7 @@ class Visualizer():
         h_text = pygame.font.SysFont(None, 16)
         for hub in self.map.hubs.values():
             pos_x, pos_y = self.pixel_pos(hub.pos_x, hub.pos_y)
-            pygame.draw.circle(self.background, self.color[hub.color], (pos_x, pos_y), 25)
+            pygame.draw.circle(self.background, self.color[hub.color], (pos_x, pos_y), self.hub_r)
             name = self.contract_name(hub.name)
             hub_name = h_text.render(name, True, (255, 255, 255))
             shadow = h_text.render(name, True, self.color['black'])
@@ -389,7 +401,7 @@ class Visualizer():
             x1, y1 = self.pixel_pos(x, y)
             x, y = connection.hub_b.get_pos()
             x2, y2 = self.pixel_pos(x, y)
-            pygame.draw.line(self.background, (100, 100, 100), (x1, y1), (x2, y2), 2)
+            pygame.draw.line(self.background, (100, 100, 100), (x1, y1), (x2, y2), 5)
 
     def draw_map(self):
         self.draw_connection()
@@ -405,7 +417,7 @@ class Visualizer():
                     b_x, b_y = d_pos.hub_b.get_pos()
                     x1, y1 = self.pixel_pos(a_x, a_y)
                     x2, y2 = self.pixel_pos(b_x, b_y)
-                    pygame.draw.line(img, (255, 255, 255), (x1, y1), (x2, y2), 2)
+                    pygame.draw.line(img, (255, 255, 255), (x1, y1), (x2, y2), 5)
                 else:
                     pos_x, pos_y = self.pixel_pos(d_pos.pos_x, d_pos.pos_y)
                     pygame.draw.circle(img, (150, 150, 150), (pos_x, pos_y + 7), 10)
