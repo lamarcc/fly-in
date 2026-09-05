@@ -105,10 +105,3 @@ class ConnectionError(MapFileError):
         error = super().__str__()
         return error + self.message
 
-class PathfindingError(Exception):
-    def __init__(self, message):
-        self.message = message
-
-    def __str__(self):
-        error_type = Colors.FAIL + Colors.BOLD + "[PathfindingError] " + Colors.ENDC + Colors.BOLD
-        return error_type + self.message + Colors.ENDC
