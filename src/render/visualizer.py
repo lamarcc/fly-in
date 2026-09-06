@@ -41,14 +41,44 @@ class Visualizer():
         self.max_y = max(y for x, y in self.all_coordinate)
         self.min_y = min(y for x, y in self.all_coordinate)
         self.zones = [zone for zone in self.map.hubs.values()]
-        self.hub_r = 50
-        self.min_spacing = 50
-        self.margin = 100
-        self.scale = (2 * self.hub_r + self.min_spacing) / 0.8
-        self.width = (self.max_x - self.min_x) * self.scale + 2 * self.margin
-        self.height = (self.max_y - self.min_y) * self.scale + 2 * self.margin
-        self.image = []
+        
+        self.width = 1000
+        self.height = 700
+        self.margin = 50
+        self.min_spacing = 10
+        
+        if self.max_x == self.min_x:
+            scale_x = float('inf')
+        else:
+            scale_x = (self.width - 2 * self.margin) / (self.max_x - self.min_x)
+        if self.max_y == self.min_y:
+            scale_y = float('inf')
+        else:
+            scale_y = (self.height - 2 * self.margin) / (self.max_y - self.min_y)
+        self.scale = min(scale_x, scale_y)
+        
+        from math import sqrt
+        mini = float('inf')
+        for hub in self.map.hubs.values():
+            for other_hub in self.map.hubs.values():
+                if other_hub is hub:
+                    continue
+                distance = sqrt((other_hub.pos_x - hub.pos_x)**2 + (other_hub.pos_y - hub.pos_y)**2)
+                if mini > distance:
+                    mini = distance
 
+        HUB_R_MIN = 5
+        HUB_R_MAX = 30
+        self.hub_r = (self.scale * mini - self.min_spacing) / 2
+        self.hub_r = max(self.hub_r, HUB_R_MIN)
+        self.hub_r = min(self.hub_r, HUB_R_MAX)
+
+        self.map_width = (self.max_x - self.min_x) * self.scale
+        self.map_height = (self.max_y - self.min_y) * self.scale
+        self.offset_x = self.margin + (self.width - 2 * self.margin - self.map_width) / 2
+        self.offset_y = self.margin + (self.height - 2 * self.margin - self.map_height) / 2
+        
+        self.image = []
         self.screen = pygame.display.set_mode((self.width, self.height))
         pygame.display.set_caption("Fly-in")
 
@@ -108,7 +138,7 @@ class Visualizer():
         self.print_text(f'{self.idx} / {self.lapmax - 1}', 60, (20, 20))
         self.print_text("Escape: Close window", 20, (20, self.height - 70))
         self.print_text("Left-Right Arrow: Previous/Next Image", 20, (20, self.height - 50))
-        self.print_text("Down-Up Arrow: Previous/Next Fast play", 20, (20, self.height - 30))
+        self.print_text("Up-Down Arrow: Fast play", 20, (20, self.height - 30))
 
     def build_image(self):
         self.screen.fill((30, 30, 30))
@@ -120,11 +150,11 @@ class Visualizer():
         if self.max_x == self.min_x:
             pos_x = self.width / 2
         else:
-            pos_x = self.margin + (x - self.min_x) / (self.max_x - self.min_x) * (self.width - 2 * self.margin)
+            pos_x = self.offset_x + (x - self.min_x) * self.scale
         if self.max_y == self.min_y:
             pos_y = self.height / 2
         else:
-            pos_y = self.margin + (y - self.min_y) / (self.max_y - self.min_y) * (self.height - 2 * self.margin)
+            pos_y = self.offset_y + (y - self.min_y) * self.scale
         return pos_x, pos_y
 
     def contract_name(self, name):
