@@ -15,9 +15,9 @@ class Simulation():
         self.drones_finished = []
         self.drones_pos = {}
 
-    def init_drones(self, road):
+    def init_drones(self, path):
         for i in range(1, self.map.nb_drones + 1):
-            drone = engine.Drone(i, self.map, road)
+            drone = engine.Drone(i, self.map, path)
             self.drones.append(drone)
 
     def init_hubs(self, data: Any):
@@ -47,22 +47,38 @@ class Simulation():
         self.init_hubs(self.parser.hubs)
         self.init_connections(self.parser.connection)
 
-    def run(self):
-        p = engine.Pathfinding(self.map)
-        road = p.find_path()
-        self.init_drones(road)
-        self.flyin(road)
+    def reset_passed_connection(self):
+        for connection in self.map.connections.values():
+            connection.passed = 0
+
+    def print_movement(self, drones_movements):
+        i = 1
+        while i != len(drones_movements.keys()):
+            for drone, hub in drones_movements[f'Lap{i}'].items():
+                if drones_movements[f'Lap{i}'][drone] != drones_movements[f'Lap{i-1}'][drone]:
+                    print(f'D{drone}-{hub.name}', end=" ")
+            print()
+            i += 1
+
+    def move_drones(self):
+        for drone in self.drones:
+            drone.move_to()
+            if drone.pos == self.map.end_hub:
+                self.drones_finished.append(drone)
 
     def flyin(self, path):
         lap = 0
         self.drones_pos[f'Lap{lap}'] = {drone.number: drone.pos for drone in self.drones}
         while len(set(self.drones_finished)) < self.map.nb_drones:
-            for connection in self.map.connections.values():
-                connection.passed = 0
-            for drone in self.drones:
-                drone.move_to()
-                if drone.pos == self.map.end_hub:
-                    self.drones_finished.append(drone)
+            self.reset_passed_connection()
+            self.move_drones()
             lap += 1
             self.drones_pos[f'Lap{lap}'] = {drone.number: drone.pos for drone in self.drones}
+        self.print_movement(self.drones_pos)
+
+    def run(self):
+        pathfinder = engine.Pathfinding(self.map)
+        path = pathfinder.find_path()
+        self.init_drones(path)
+        self.flyin(path)
         self.visualizer.create_window(self.drones_pos)

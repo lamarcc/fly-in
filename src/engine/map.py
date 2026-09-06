@@ -29,10 +29,7 @@ class Hub():
         return (self.pos_x, self.pos_y)
 
     def check_capacity(self):
-        if self.occupied + 1 <= self.max_capacity:
-            return True
-        else:
-            return False
+        return (self.occupied + 1 <= self.max_capacity)
 
     def is_connected_to(self, hub):
         return (hub in self.connected_to)
@@ -51,13 +48,10 @@ class Connection():
         self.passed = 0
 
     def check_capacity(self):
-        if self.occupied + 1 <= self.max_capacity:
-            return True
-        else:
-            return False
+        return (self.occupied + 1 <= self.max_capacity)
 
 
-class ZoneType(Enum):
+class ZoneType():
     NORMAL = "normal"
     BLOCKED = "blocked"
     RESTRICTED = "restricted"

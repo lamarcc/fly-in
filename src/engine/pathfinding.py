@@ -1,4 +1,5 @@
 from parser.errors import Colors
+from engine import ZoneType
 
 class PathfindingError(Exception):
     def __init__(self, message):
@@ -41,13 +42,13 @@ class Pathfinding():
         return full_path
 
     def get_cost(self, hub_to, actual_hub):
-        if hub_to.zone_type == "normal":
+        if hub_to.zone_type == ZoneType.NORMAL:
             if self.zone[actual_hub] + 1 < self.zone[hub_to]:
                 return self.zone[actual_hub] + 1
-        elif hub_to.zone_type == "priority":
+        elif hub_to.zone_type == ZoneType.PRIORITY:
             if self.zone[actual_hub] + 0.5 < self.zone[hub_to]:
                 return self.zone[actual_hub] + 0.5
-        elif hub_to.zone_type == "restricted":
+        elif hub_to.zone_type == ZoneType.RESTRICTED:
             if self.zone[actual_hub] + 2 < self.zone[hub_to]:
                 return self.zone[actual_hub] + 2
 
@@ -55,16 +56,13 @@ class Pathfinding():
         for hubs in self.path.keys():
             hub = hubs
             path = [hub]
-        full_path = []
         if len(self.path):
             while hub != self.start:
                 hub = self.path[hub]
                 path.append(hub)
-            for i in reversed(path):
-                full_path.append(i)
-            if self.end in full_path:
+            if self.end in path:
                 self.path_found = True
-            return full_path
+            return list(reversed(path))
         else:
             return [self.start]
 
