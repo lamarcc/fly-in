@@ -1,4 +1,4 @@
-from engine import Hub, Connection, Drone
+from engine import Connection
 from math import sqrt
 import pygame
 import time
