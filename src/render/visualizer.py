@@ -1,4 +1,5 @@
 from engine import Hub, Connection, Drone
+from math import sqrt
 import pygame
 import time
 
@@ -35,18 +36,43 @@ class Visualizer():
         self.simulation = simulation
 
     def create_window(self, movement_history):
+        self.define_window_values()
+        self.screen = pygame.display.set_mode((self.width, self.height))
+        pygame.display.set_caption("Fly-in")
+        pygame.font.init()
+        self.create_images(movement_history)
+        self.screen.fill((30, 30, 30))
+        self.draw_map()
+        self.draw_drones(movement_history)
+
+        self.idx = 0
+        self.build_image()
+        self.running = True
+        while self.running:
+            self.fast_play()
+            for event in pygame.event.get():
+                self.catch_event(event)
+            pygame.display.flip()
+
+    def define_window_values(self):
+        self.width = 1000
+        self.height = 700
+        self.margin = 50
+        self.min_spacing = 10
+        self.get_max_min_pos()
+        self.get_scale()
+        self.get_min_distance_between_hub()
+        self.get_hub_radius()
+        self.get_offset()
+
+    def get_max_min_pos(self):
         self.all_coordinate = [(pos.pos_x, pos.pos_y) for pos in self.map.hubs.values()]
         self.max_x = max(x for x, y in self.all_coordinate)
         self.min_x = min(x for x, y in self.all_coordinate)
         self.max_y = max(y for x, y in self.all_coordinate)
         self.min_y = min(y for x, y in self.all_coordinate)
-        self.zones = [zone for zone in self.map.hubs.values()]
-        
-        self.width = 1000
-        self.height = 700
-        self.margin = 50
-        self.min_spacing = 10
-        
+
+    def get_scale(self):
         if self.max_x == self.min_x:
             scale_x = float('inf')
         else:
@@ -56,78 +82,37 @@ class Visualizer():
         else:
             scale_y = (self.height - 2 * self.margin) / (self.max_y - self.min_y)
         self.scale = min(scale_x, scale_y)
-        
-        from math import sqrt
-        mini = float('inf')
+
+    def get_min_distance_between_hub(self):
+        self.distance_min = float('inf')
         for hub in self.map.hubs.values():
             for other_hub in self.map.hubs.values():
                 if other_hub is hub:
                     continue
                 distance = sqrt((other_hub.pos_x - hub.pos_x)**2 + (other_hub.pos_y - hub.pos_y)**2)
-                if mini > distance:
-                    mini = distance
+                if self.distance_min > distance:
+                    self.distance_min = distance
 
-        HUB_R_MIN = 5
-        HUB_R_MAX = 30
-        self.hub_r = (self.scale * mini - self.min_spacing) / 2
-        self.hub_r = max(self.hub_r, HUB_R_MIN)
-        self.hub_r = min(self.hub_r, HUB_R_MAX)
+    def get_hub_radius(self):
+        hub_r_min = 5
+        hub_r_max = 30
+        self.hub_r = (self.scale * self.distance_min - self.min_spacing) / 2
+        self.hub_r = max(self.hub_r, hub_r_min)
+        self.hub_r = min(self.hub_r, hub_r_max)
 
+    def get_offset(self):
         self.map_width = (self.max_x - self.min_x) * self.scale
         self.map_height = (self.max_y - self.min_y) * self.scale
         self.offset_x = self.margin + (self.width - 2 * self.margin - self.map_width) / 2
         self.offset_y = self.margin + (self.height - 2 * self.margin - self.map_height) / 2
-        
+
+    def create_images(self, movement_history):
         self.image = []
-        self.screen = pygame.display.set_mode((self.width, self.height))
-        pygame.display.set_caption("Fly-in")
-
-        pygame.font.init()
-
         self.lapmax = len(movement_history.keys())
         for i in range(self.lapmax):
             img = pygame.Surface((self.width, self.height), pygame.SRCALPHA)
             self.image.append(img)
-
         self.background = pygame.Surface((self.width, self.height), pygame.SRCALPHA)
-        self.screen.fill((30, 30, 30))
-        self.draw_map()
-        self.draw_drones(movement_history)
-
-        self.idx = 0
-        self.build_image()
-        running = True
-        while running:
-            pressed = pygame.key.get_pressed()
-            if pressed[pygame.K_UP]:
-                self.idx += 1
-                if self.idx >= self.lapmax:
-                    self.idx = self.lapmax - 1
-                self.build_image()
-                time.sleep(0.1)
-            if pressed[pygame.K_DOWN]:
-                self.idx -= 1
-                if self.idx <= 0:
-                    self.idx = 0
-                self.build_image()
-                time.sleep(0.1)
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    running = False
-                if event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_ESCAPE:
-                        running = False
-                    if event.key == pygame.K_RIGHT:
-                        self.idx += 1
-                        if self.idx >= self.lapmax:
-                            self.idx = self.lapmax - 1
-                        self.build_image()
-                    if event.key == pygame.K_LEFT:
-                        if self.idx <= 0:
-                            continue
-                        self.idx -= 1
-                        self.build_image()
-            pygame.display.flip()
 
     def print_text(self, text, size, pos):
         font = pygame.font.SysFont(None, size)
@@ -196,14 +181,54 @@ class Visualizer():
                 if isinstance(d_pos, Connection):
                     a_x, a_y = d_pos.hub_a.get_pos()
                     b_x, b_y = d_pos.hub_b.get_pos()
-                    x1, y1 = self.pixel_pos(a_x, a_y)
-                    x2, y2 = self.pixel_pos(b_x, b_y)
-                    pygame.draw.line(img, (255, 255, 255), (x1, y1), (x2, y2), 5)
+                    mid_x = a_x + ((b_x - a_x) / 2)
+                    mid_y = a_y + ((b_y - a_y) / 2)
+                    x, y = self.pixel_pos(mid_x, mid_y)
+                    pygame.draw.circle(img, Color.rgb['gray'], (x, y), 8)
+                    pygame.draw.circle(img, Color.rgb['white'], (x, y), 6)
+                    text = d_text.render(str(d_number), True, Color.rgb['black'])
+                    pos = text.get_rect(center=(x, y))
+                    img.blit(text, pos)
                 else:
                     pos_x, pos_y = self.pixel_pos(d_pos.pos_x, d_pos.pos_y)
-                    pygame.draw.circle(img, (150, 150, 150), (pos_x, pos_y + 7), 10)
-                    pygame.draw.circle(img, (230, 230, 230), (pos_x, pos_y + 7), 8)
+                    pygame.draw.circle(img, Color.rgb['gray'], (pos_x, pos_y + 7), 10)
+                    pygame.draw.circle(img, Color.rgb['white'], (pos_x, pos_y + 7), 8)
                     text = d_text.render(str(d_number), True, Color.rgb['black'])
                     pos = text.get_rect(center=(pos_x, pos_y + 7))
                     img.blit(text, pos)
             i += 1
+
+    def fast_play(self):
+        pressed = pygame.key.get_pressed()
+        if pressed[pygame.K_UP]:
+            self.idx += 1
+            if self.idx >= self.lapmax:
+                self.idx = self.lapmax - 1
+            self.build_image()
+            time.sleep(0.1)
+        if pressed[pygame.K_DOWN]:
+            self.idx -= 1
+            if self.idx <= 0:
+                self.idx = 0
+            self.build_image()
+            time.sleep(0.05)
+
+    def catch_event(self, event):
+        if event.type == pygame.QUIT:
+            self.running = False
+        if event.type == pygame.KEYDOWN:
+            self.wich_key(event.key)
+
+    def wich_key(self, key):
+        if key == pygame.K_ESCAPE:
+            self.running = False
+        if key == pygame.K_RIGHT:
+            self.idx += 1
+            if self.idx >= self.lapmax:
+                return
+            self.build_image()
+        if key == pygame.K_LEFT:
+            if self.idx <= 0:
+                return
+            self.idx -= 1
+            self.build_image()

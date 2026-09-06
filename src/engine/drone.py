@@ -49,4 +49,4 @@ class Drone():
     def check_connection_capacity(self, destination):
         if self.pos.is_connected_to(destination):
             connection = self.pos.get_this_connection(destination)
-            return connection.passed <=connection.max_capacity
+            return connection.passed < connection.max_capacity
