@@ -36,14 +36,17 @@ class Visualizer():
         self.simulation = simulation
 
     def create_window(self, movement_history):
+        self.width = 1000
+        self.height = 700
         self.define_window_values()
-        self.screen = pygame.display.set_mode((self.width, self.height))
+        self.screen = pygame.display.set_mode((self.width, self.height), pygame.SCALED)
         pygame.display.set_caption("Fly-in")
         pygame.font.init()
         self.create_images(movement_history)
         self.screen.fill((30, 30, 30))
         self.draw_map()
         self.draw_drones(movement_history)
+        self.movement_history = movement_history
 
         self.idx = 0
         self.build_image()
@@ -55,8 +58,6 @@ class Visualizer():
             pygame.display.flip()
 
     def define_window_values(self):
-        self.width = 1000
-        self.height = 700
         self.margin = 50
         self.min_spacing = 10
         self.get_max_min_pos()
@@ -218,6 +219,17 @@ class Visualizer():
             self.running = False
         if event.type == pygame.KEYDOWN:
             self.wich_key(event.key)
+        if event.type == pygame.VIDEORESIZE:
+            self.idx = 0
+            self.width = event.w
+            self.height = event.h
+            self.screen = pygame.display.set_mode((event.w, event.h), pygame.RESIZABLE)
+            self.define_window_values()
+            self.create_images(self.movement_history)
+            self.screen.fill((30, 30, 30))
+            self.draw_map()
+            self.draw_drones(self.movement_history)
+            self.build_image()
 
     def wich_key(self, key):
         if key == pygame.K_ESCAPE:
