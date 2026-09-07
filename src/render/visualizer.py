@@ -30,26 +30,20 @@ class Color():
             "rainbow": (255, 105, 180),
     }
 
+
 class Visualizer():
     def __init__(self, map, simulation):
         self.map = map
         self.simulation = simulation
 
     def create_window(self, movement_history):
-        self.width = 1000
-        self.height = 700
         self.define_window_values()
-        self.screen = pygame.display.set_mode((self.width, self.height), pygame.SCALED)
+        self.movement_history = movement_history
+        self.screen = pygame.display.set_mode((self.width, self.height), pygame.RESIZABLE)
         pygame.display.set_caption("Fly-in")
         pygame.font.init()
-        self.create_images(movement_history)
-        self.screen.fill((30, 30, 30))
         self.draw_map()
-        self.draw_drones(movement_history)
-        self.movement_history = movement_history
-
         self.idx = 0
-        self.build_image()
         self.running = True
         while self.running:
             self.fast_play()
@@ -58,6 +52,11 @@ class Visualizer():
             pygame.display.flip()
 
     def define_window_values(self):
+        self.width = 1000
+        self.height = 700
+        self.resize_window()
+
+    def resize_window(self):
         self.margin = 50
         self.min_spacing = 10
         self.get_max_min_pos()
@@ -107,9 +106,9 @@ class Visualizer():
         self.offset_x = self.margin + (self.width - 2 * self.margin - self.map_width) / 2
         self.offset_y = self.margin + (self.height - 2 * self.margin - self.map_height) / 2
 
-    def create_images(self, movement_history):
+    def create_images(self):
         self.image = []
-        self.lapmax = len(movement_history.keys())
+        self.lapmax = len(self.movement_history.keys())
         for i in range(self.lapmax):
             img = pygame.Surface((self.width, self.height), pygame.SRCALPHA)
             self.image.append(img)
@@ -126,11 +125,18 @@ class Visualizer():
         self.print_text("Left-Right Arrow: Previous/Next Image", 20, (20, self.height - 50))
         self.print_text("Up-Down Arrow: Fast play", 20, (20, self.height - 30))
 
-    def build_image(self):
+    def show_image(self):
         self.screen.fill((30, 30, 30))
         self.print_info()
         self.screen.blit(self.background, (0, 0))
         self.screen.blit(self.image[self.idx], (0, 0))
+
+    def draw_map(self):
+        self.create_images()
+        self.screen.fill((30, 30, 30))
+        self.draw_connection()
+        self.draw_hub()
+        self.draw_drones()
 
     def pixel_pos(self, x, y):
         if self.max_x == self.min_x:
@@ -170,15 +176,11 @@ class Visualizer():
             x2, y2 = self.pixel_pos(x, y)
             pygame.draw.line(self.background, (100, 100, 100), (x1, y1), (x2, y2), 5)
 
-    def draw_map(self):
-        self.draw_connection()
-        self.draw_hub()
-
-    def draw_drones(self, lap_history):
+    def draw_drones(self):
         i = 0
         d_text = pygame.font.SysFont(None, 16)
         for img in self.image:
-            for d_number, d_pos in lap_history[f'Lap{i}'].items():
+            for d_number, d_pos in self.movement_history[f'Lap{i}'].items():
                 if isinstance(d_pos, Connection):
                     a_x, a_y = d_pos.hub_a.get_pos()
                     b_x, b_y = d_pos.hub_b.get_pos()
@@ -205,13 +207,13 @@ class Visualizer():
             self.idx += 1
             if self.idx >= self.lapmax:
                 self.idx = self.lapmax - 1
-            self.build_image()
+            self.show_image()
             time.sleep(0.1)
         if pressed[pygame.K_DOWN]:
             self.idx -= 1
             if self.idx <= 0:
                 self.idx = 0
-            self.build_image()
+            self.show_image()
             time.sleep(0.05)
 
     def catch_event(self, event):
@@ -220,16 +222,12 @@ class Visualizer():
         if event.type == pygame.KEYDOWN:
             self.wich_key(event.key)
         if event.type == pygame.VIDEORESIZE:
-            self.idx = 0
             self.width = event.w
             self.height = event.h
-            self.screen = pygame.display.set_mode((event.w, event.h), pygame.RESIZABLE)
-            self.define_window_values()
-            self.create_images(self.movement_history)
-            self.screen.fill((30, 30, 30))
+            self.resize_window()
+            self.create_images()
             self.draw_map()
-            self.draw_drones(self.movement_history)
-            self.build_image()
+            self.show_image()
 
     def wich_key(self, key):
         if key == pygame.K_ESCAPE:
