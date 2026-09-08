@@ -201,21 +201,6 @@ class Visualizer():
                     img.blit(text, pos)
             i += 1
 
-    def fast_play(self):
-        pressed = pygame.key.get_pressed()
-        if pressed[pygame.K_UP]:
-            self.idx += 1
-            if self.idx >= self.lapmax:
-                self.idx = self.lapmax - 1
-            self.show_image()
-            time.sleep(0.1)
-        if pressed[pygame.K_DOWN]:
-            self.idx -= 1
-            if self.idx <= 0:
-                self.idx = 0
-            self.show_image()
-            time.sleep(0.05)
-
     def catch_event(self, event):
         if event.type == pygame.QUIT:
             self.running = False
@@ -229,16 +214,32 @@ class Visualizer():
             self.draw_map()
             self.show_image()
 
+    def fast_play(self):
+        pressed = pygame.key.get_pressed()
+        if pressed[pygame.K_UP]:
+            if self.idx >= self.lapmax - 1:
+                return
+            self.idx += 1
+            self.show_image()
+            time.sleep(0.05)
+        if pressed[pygame.K_DOWN]:
+            if self.idx <= 0:
+                return
+            self.idx -= 1
+            self.show_image()
+            time.sleep(0.05)
+
     def wich_key(self, key):
         if key == pygame.K_ESCAPE:
             self.running = False
         if key == pygame.K_RIGHT:
-            self.idx += 1
-            if self.idx >= self.lapmax:
+            if self.idx >= self.lapmax - 1:
                 return
-            self.build_image()
+            self.idx += 1
+            self.show_image()
         if key == pygame.K_LEFT:
             if self.idx <= 0:
                 return
             self.idx -= 1
-            self.build_image()
+            print(self.idx)
+            self.show_image()
