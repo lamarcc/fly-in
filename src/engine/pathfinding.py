@@ -1,5 +1,5 @@
 from parser.errors import Colors
-from engine import ZoneType
+from .map import Map, Hub, ZoneType
 
 class PathfindingError(Exception):
     def __init__(self, message):
@@ -11,7 +11,7 @@ class PathfindingError(Exception):
 
 
 class Pathfinding():
-    def __init__(self, map):
+    def __init__(self, map: Map) -> None:
         self.start = map.start_hub
         self.end = map.end_hub
         self.path = {}
@@ -25,7 +25,7 @@ class Pathfinding():
             else:
                 self.zone[hub] = float('inf')
 
-    def find_path(self):
+    def find_path(self) -> list:
         while len(self.zone.keys()) != 0:
             hub = self.get_lowest_hub()
             for hub_to in hub.connected_to:
@@ -41,7 +41,7 @@ class Pathfinding():
             raise PathfindingError("No valid path found")
         return full_path
 
-    def get_cost(self, hub_to, actual_hub):
+    def get_cost(self, hub_to: Hub, actual_hub: Hub) -> int:
         if hub_to.zone_type == ZoneType.NORMAL:
             if self.zone[actual_hub] + 1 < self.zone[hub_to]:
                 return self.zone[actual_hub] + 1
@@ -52,7 +52,7 @@ class Pathfinding():
             if self.zone[actual_hub] + 2 < self.zone[hub_to]:
                 return self.zone[actual_hub] + 2
 
-    def get_full_path(self):
+    def get_full_path(self) -> list:
         for hubs in self.path.keys():
             hub = hubs
             path = [hub]
@@ -66,7 +66,7 @@ class Pathfinding():
         else:
             return [self.start]
 
-    def get_lowest_hub(self):
+    def get_lowest_hub(self) -> dict:
         lowest_cost = min([v for k, v in self.zone.items()])
         r_dict = {v: k for k, v in self.zone.items()}
         return r_dict[lowest_cost]

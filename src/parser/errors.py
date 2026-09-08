@@ -11,7 +11,7 @@ class Colors():
 
 
 class Error(Exception):
-    def msg(self, type, message):
+    def msg(self, type: str, message: str) -> str:
         error = Colors.FAIL + "[" + type + "]" + Colors.ENDC
         return error + message
 
@@ -21,24 +21,24 @@ class ParsingError(Exception):
 
 
 class MapFileError(Exception):
-    def __init__(self, line):
+    def __init__(self, line: int) -> None:
         self.line = line
 
-    def __str__(self):
+    def __str__(self) -> str:
         error_type = Colors.FAIL + Colors.BOLD + "[MapFileError] " + Colors.ENDC + Colors.BOLD
         return error_type + f"Line {self.line}: " + Colors.ENDC
 
-    def msg(line, message):
+    def msg(line, message) -> str:
         error = Colors.FAIL + Colors.BOLD + "[MapFileError] " + Colors.ENDC + Colors.BOLD + f"Line {line}: "
         return error + Colors.ENDC + message
 
-    def warning(line, message):
+    def warning(line, message) -> str:
         warning = Colors.WARNING + Colors.BOLD + "[MapFileWarning] " + Colors.ENDC + Colors.BOLD + f"Line {line}: "
         return warning + message + Colors.ENDC
 
 
 class HubError(MapFileError):
-    def __init__(self, line, message):
+    def __init__(self, line: int, message: str):
         self.message = message
         super().__init__(line)
 
@@ -48,60 +48,60 @@ class HubError(MapFileError):
 
 
 class MetadataError(MapFileError):
-    def __init__(self, line, message):
+    def __init__(self, line: int, message: str) -> None:
         self.message = message
         super().__init__(line)
 
-    def __str__(self):
+    def __str__(self) -> str:
         error = super().__str__()
         return error + self.message
 
 
 class InvalidKeyError(MapFileError):
-    def __init__(self, line, key):
+    def __init__(self, line: int, key: str) -> None:
         self.key = key
         super().__init__(line)
 
-    def __str__(self):
+    def __str__(self) -> str:
         error = super().__str__()
         return error + f"Invalid '{self.key}' map information"
 
 
 class InvalidLineError(MapFileError):
-    def __init__(self, line):
+    def __init__(self, line: int) -> None:
         super().__init__(line)
 
-    def __str__(self):
+    def __str__(self) -> str:
         error = super().__str__()
         return error + "Too much arguments"
 
 
 class InvalidValue(MapFileError):
-    def __init__(self, line, message):
+    def __init__(self, line: int, message: str) -> None:
         self.message = message
         super().__init__(line)
 
-    def __str__(self):
+    def __str__(self) -> str:
         error = super().__str__()
         return error + self.message
 
 
 class DoublonError(MapFileError):
-    def __init__(self, line, key):
+    def __init__(self, line: int, key: str) -> None:
         self.key = key
         super().__init__(line)
 
-    def __str__(self):
+    def __str__(self) -> str:
         error = super().__str__()
         return error + f"Already defined earlier '{self.key}'"
 
 
 class ConnectionError(MapFileError):
-    def __init__(self, line, message):
+    def __init__(self, line: int, message: str) -> None:
         self.message = message
         super().__init__(line)
 
-    def __str__(self):
+    def __str__(self) -> None:
         error = super().__str__()
         return error + self.message
 

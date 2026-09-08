@@ -15,7 +15,7 @@ class Color():
 
 
 class Parse():
-    def __init__(self):
+    def __init__(self) -> None:
         self.nb_drones = None
         self.nb_drones_check = 0
         self.start_hub = {}
@@ -27,7 +27,7 @@ class Parse():
         self.nb_line = 0
         self.err = []
 
-    def parse(self, file: str):
+    def parse(self, file: str) -> None:
         try:
             f = open(file)
             for line in f:
@@ -56,7 +56,7 @@ class Parse():
         except FileNotFoundError:
             print(errors.MapFileError.msg(self.nb_line, "File does not exist"))
 
-    def check_line(self, key, info):
+    def check_line(self, key: str, info: str) -> None:
         m_start = info.find("[")
         m_end = info.find("]")
         if m_start != -1 and m_end != -1:
@@ -67,7 +67,7 @@ class Parse():
             if (key == "hub" and len(info.split()) > 3) or (key == "connection" and len(info.split()) > 1):
                 self.err.append(errors.InvalidLineError(self.nb_line))
 
-    def parse_key_info(self, key: str, info: str):
+    def parse_key_info(self, key: str, info: str) -> None:
         if key == "nb_drones":
             try:
                 if self.nb_drones == None:
@@ -113,7 +113,7 @@ class Parse():
         else:
             raise errors.InvalidKeyError(self.nb_line, key)
 
-    def try_position(self, hub_info):
+    def try_position(self, hub_info: dict) -> None:
         try:
             x = int(hub_info["pos_x"])
             y = int(hub_info["pos_y"])
@@ -125,7 +125,7 @@ class Parse():
         except ValueError:
             raise errors.HubError(self.nb_line, f"Undefined '{hub_info['name']}' hub position")
 
-    def parse_hub(self, line: str):
+    def parse_hub(self, line: str) -> dict:
         default_info = {"name": "undefined", "pos_x": "undefined", "pos_y": "undefined"}
         default_metadata = {"zone": "normal", "max_drones": "1", "color": "none"}
         hub_info = {}
@@ -148,7 +148,7 @@ class Parse():
             hub_info["metadata"] = default_metadata
             return {**default_info, **hub_info}
 
-    def parse_metadata(self, name, info, default_metadata):
+    def parse_metadata(self, name: str, info: str, default_metadata: dict) -> dict:
         info = [i.split("=") for i in info.strip("[]").split()]
         for verif_format in info:
             if len(verif_format) == 1:
@@ -181,7 +181,7 @@ class Parse():
             self.err.append(errors.InvalidValue(self.nb_line, "Invalid 'max_drones' value"))
         return new_metadata
 
-    def parse_connection(self, line: str):
+    def parse_connection(self, line: str) -> dict:
         default_metadata = {"max_link_capacity": 1}
         metadata_index = line.find("[")
         invalid_data = []

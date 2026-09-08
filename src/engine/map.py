@@ -1,4 +1,6 @@
+from __future__ import annotations
 from enum import Enum
+from typing import Tuple
 
 class Map():
     def __init__(self):
@@ -11,7 +13,7 @@ class Map():
 
 
 class Hub():
-    def __init__(self, map, name: str, x: int, y: int, metadata: dict):
+    def __init__(self, map: Map, name: str, x: int, y: int, metadata: dict):
         self.name = name
         self.map = map
         self.pos_x = x
@@ -22,24 +24,24 @@ class Hub():
         self.max_capacity = metadata["max_drones"]
         self.occupied = 0
 
-    def get_connections(self):
+    def get_connections(self) -> list:
         return self.connected_to
 
-    def get_pos(self):
+    def get_pos(self) -> Tuple(int, int):
         return (self.pos_x, self.pos_y)
 
-    def check_capacity(self):
+    def check_capacity(self) -> bool:
         return (self.occupied + 1 <= self.max_capacity)
 
-    def is_connected_to(self, hub):
+    def is_connected_to(self, hub) -> bool:
         return (hub in self.connected_to)
 
-    def get_this_connection(self, hub):
+    def get_this_connection(self, hub) -> Connection:
         return self.map.connections[f'{self.name}-{hub.name}'] or self.map.connections[f'{hub.name}-{self.name}']
 
 
 class Connection():
-    def __init__(self, name, hub_a: Hub, hub_b: Hub, data: dict):
+    def __init__(self, name: str, hub_a: Hub, hub_b: Hub, data: dict) -> None:
         self.name = name
         self.hub_a = hub_a
         self.hub_b = hub_b
@@ -47,7 +49,7 @@ class Connection():
         self.occupied = 0
         self.passed = 0
 
-    def check_capacity(self):
+    def check_capacity(self) -> bool:
         return (self.occupied + 1 <= self.max_capacity)
 
 
