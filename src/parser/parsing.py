@@ -192,7 +192,6 @@ class Parse():
                 link = [None, None]
             info = [i.split("=") for i in line[metadata_index:].strip("[]").split()]
             for verif_format in info:
-                print(verif_format)
                 if len(verif_format) == 1:
                     self.err.append(errors.MetadataError(self.nb_line, "Missing value after metadata key, follow <metadata=value>"))
                     verif_format.append("undefined")

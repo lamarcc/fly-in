@@ -2,11 +2,12 @@ from parser.errors import Colors
 from .map import Map, Hub, ZoneType
 from typing import Any
 
+
 class PathfindingError(Exception):
-    def __init__(self, message):
+    def __init__(self, message: str) -> None:
         self.message = message
 
-    def __str__(self):
+    def __str__(self) -> Any:
         error_type = Colors.FAIL + Colors.BOLD + "[PathfindingError] " + Colors.ENDC + Colors.BOLD
         return error_type + self.message + Colors.ENDC
 

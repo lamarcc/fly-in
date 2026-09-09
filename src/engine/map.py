@@ -32,10 +32,10 @@ class Hub():
     def check_capacity(self) -> bool:
         return (self.occupied + 1 <= self.max_capacity)
 
-    def is_connected_to(self, hub) -> bool:
+    def is_connected_to(self, hub: Hub) -> bool:
         return (hub in self.connected_to)
 
-    def get_this_connection(self, hub) -> Any:
+    def get_this_connection(self, hub: Hub) -> Any:
         if f'{self.name}-{hub.name}' in self.map.connections:
             return self.map.connections[f'{self.name}-{hub.name}']
         else:

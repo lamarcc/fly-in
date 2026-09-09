@@ -1,4 +1,4 @@
-from engine import Connection
+from engine import Connection, Simulation, Map
 from math import sqrt
 from typing import Tuple, Any
 import pygame
@@ -33,11 +33,11 @@ class Color():
 
 
 class Visualizer():
-    def __init__(self, map, simulation) -> None:
+    def __init__(self, map: Map, simulation: Simulation) -> None:
         self.map = map
         self.simulation = simulation
 
-    def create_window(self, movement_history) -> None:
+    def create_window(self, movement_history: dict) -> None:
         self.define_window_values()
         self.movement_history = movement_history
         self.screen = pygame.display.set_mode((self.width, self.height), pygame.RESIZABLE)
@@ -115,7 +115,7 @@ class Visualizer():
             self.image.append(img)
         self.background = pygame.Surface((self.width, self.height), pygame.SRCALPHA)
 
-    def print_text(self, text, size, pos) -> None:
+    def print_text(self, text: str, size: int, pos: Tuple[float, float]) -> None:
         font = pygame.font.SysFont(None, size)
         show_text = font.render(text, True, Color.rgb['white'])
         self.screen.blit(show_text, pos)
@@ -139,7 +139,7 @@ class Visualizer():
         self.draw_hub()
         self.draw_drones()
 
-    def pixel_pos(self, x, y) -> Tuple[float, float]:
+    def pixel_pos(self, x: float, y: float) -> Tuple[float, float]:
         if self.max_x == self.min_x:
             pos_x = self.width / 2
         else:
@@ -150,7 +150,7 @@ class Visualizer():
             pos_y = self.offset_y + (y - self.min_y) * self.scale
         return pos_x, pos_y
 
-    def contract_name(self, name) -> str:
+    def contract_name(self, name: str) -> str:
         if len(name) > 2:
             character = list(name[0])
             number = [i for i in name if i.isdigit()]
