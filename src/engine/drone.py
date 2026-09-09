@@ -1,4 +1,6 @@
 from .map import Map, Hub, Connection
+from typing import Any
+
 
 class Drone():
     def __init__(self, number: int, map: Map, road: list) -> None:
@@ -46,7 +48,8 @@ class Drone():
             return
         self.path.remove(self.pos)
 
-    def check_connection_capacity(self, destination: Hub | Connection) -> bool:
+    def check_connection_capacity(self, destination: Hub | Connection) -> Any | bool:
         if self.pos.is_connected_to(destination):
             connection = self.pos.get_this_connection(destination)
             return connection.passed < connection.max_capacity
+        return False

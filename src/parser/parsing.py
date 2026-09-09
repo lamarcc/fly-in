@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Tuple
+from typing import Tuple, Any
 from . import errors
 
 
@@ -16,16 +16,16 @@ class Color():
 
 class Parse():
     def __init__(self) -> None:
-        self.nb_drones = None
-        self.nb_drones_check = 0
-        self.start_hub = {}
-        self.end_hub = {}
-        self.hubs = []
-        self.known_position = []
-        self.connection = []
-        self.hub_name = []
-        self.nb_line = 0
-        self.err = []
+        self.nb_drones: Any = None
+        self.nb_drones_check: int = 0
+        self.start_hub: dict = {}
+        self.end_hub: dict = {}
+        self.hubs: list = []
+        self.known_position: list = []
+        self.connection: list = []
+        self.hub_name: list[str] = []
+        self.nb_line: int = 0
+        self.err: list = []
 
     def parse(self, file: str) -> None:
         try:
@@ -187,21 +187,22 @@ class Parse():
         invalid_data = []
         if metadata_index != -1:
             link = line[:metadata_index].strip().split("-")
-            if len(link) != 2:
+            if len(link) != 2 or "" in link:
                 self.err.append(errors.ConnectionError(self.nb_line, "Connection invalid, follow <from-to>"))
                 link = [None, None]
             info = [i.split("=") for i in line[metadata_index:].strip("[]").split()]
             for verif_format in info:
+                print(verif_format)
                 if len(verif_format) == 1:
                     self.err.append(errors.MetadataError(self.nb_line, "Missing value after metadata key, follow <metadata=value>"))
                     verif_format.append("undefined")
                 elif len(verif_format) == 2 and verif_format[1] == "":
                     print(errors.MapFileError.warning(self.nb_line, f"Value is missing for '{verif_format[0]}', '1' set by default"))
-                    verif_format[1] = 1
+                    verif_format[1] = "None"
                 elif len(verif_format) > 2:
                     info.remove(verif_format)
                     self.err.append(errors.MetadataError(self.nb_line, "Typing incorrect, follow <metadata=info>"))
-            metadata = {key: value for key, value in info}
+            metadata: dict[str, Any] = {key: value for key, value in info}
             try:
                 for check_metadata in metadata.keys():
                     if check_metadata != "max_link_capacity":
@@ -216,7 +217,7 @@ class Parse():
             return {"hub_a": link[0], "hub_b": link[1], "metadata": metadata}
         else:
             link = line.strip().split("-")
-            if len(link) != 2:
+            if len(link) != 2 or "" in link:
                 self.err.append(errors.ConnectionError(self.nb_line, "Connection invalid, follow <from-to>"))
-                link = [None, None]
+                link = ["None", "None"]
             return {"hub_a": link[0], "hub_b": link[1], "metadata": default_metadata}

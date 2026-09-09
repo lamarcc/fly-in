@@ -7,13 +7,13 @@ import engine
 
 class Simulation():
     def __init__(self) -> None:
-        self.map = engine.Map()
-        self.parser = Parse()
-        self.visualizer = render.Visualizer(self.map, self)
-        self.is_running = False
-        self.drones = []
-        self.drones_finished = []
-        self.drones_pos = {}
+        self.map: engine.Map = engine.Map()
+        self.parser: Parse = Parse()
+        self.visualizer: render.Visualizer = render.Visualizer(self.map, self)
+        self.is_running: bool = False
+        self.drones: list = []
+        self.drones_finished: list = []
+        self.drones_pos: dict = {}
 
     def init_drones(self, path: list) -> None:
         for i in range(1, self.map.nb_drones + 1):

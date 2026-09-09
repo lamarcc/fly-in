@@ -1,5 +1,6 @@
 from engine import Connection
 from math import sqrt
+from typing import Tuple, Any
 import pygame
 import time
 
@@ -57,7 +58,7 @@ class Visualizer():
         self.resize_window()
 
     def resize_window(self) -> None:
-        self.margin = 50
+        self.margin = 100
         self.min_spacing = 10
         self.get_max_min_pos()
         self.get_scale()
@@ -138,7 +139,7 @@ class Visualizer():
         self.draw_hub()
         self.draw_drones()
 
-    def pixel_pos(self, x, y) -> None:
+    def pixel_pos(self, x, y) -> Tuple[float, float]:
         if self.max_x == self.min_x:
             pos_x = self.width / 2
         else:
