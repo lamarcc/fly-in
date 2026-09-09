@@ -1,12 +1,12 @@
 from __future__ import annotations
 from parser import Parse
 from typing import Any
-import render
 import engine
 
 
 class Simulation():
     def __init__(self) -> None:
+        import render
         self.map: engine.Map = engine.Map()
         self.parser: Parse = Parse()
         self.visualizer: render.Visualizer = render.Visualizer(self.map, self)

@@ -242,5 +242,4 @@ class Visualizer():
             if self.idx <= 0:
                 return
             self.idx -= 1
-            print(self.idx)
             self.show_image()
