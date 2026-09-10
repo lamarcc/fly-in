@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, Optional
 
 class Colors():
     HEADER = '\033[95m'
@@ -30,11 +30,15 @@ class MapFileError(Exception):
         error_type = Colors.FAIL + Colors.BOLD + "[MapFileError] " + Colors.ENDC + Colors.BOLD
         return error_type + f"Line {self.line}: " + Colors.ENDC
 
-    def msg(self, line: int, message: str) -> Any:
-        error = Colors.FAIL + Colors.BOLD + "[MapFileError] " + Colors.ENDC + Colors.BOLD + f"Line {line}: "
+    @staticmethod
+    def msg(message: str, line: Optional[int] = None) -> Any:
+        error = Colors.FAIL + Colors.BOLD + "[MapFileError] " + Colors.ENDC
+        if line:
+            error += Colors.BOLD + f'Line {line}: '
         return error + Colors.ENDC + message
 
-    def warning(self, line: int, message: str) -> Any:
+    @staticmethod
+    def warning(line: int, message: str) -> Any:
         warning = Colors.WARNING + Colors.BOLD + "[MapFileWarning] " + Colors.ENDC + Colors.BOLD + f"Line {line}: "
         return warning + message + Colors.ENDC
 
@@ -110,3 +114,10 @@ class ConnectionError(MapFileError):
         error = super().__str__()
         return error + self.message
 
+
+class SimulationStop(Exception):
+    def __init__(self) -> None:
+        self.template = Colors.WARNING + Colors.BOLD + "[SimulationState] " + Colors.ENDC
+
+    def __str__(self) -> Any:
+        return self.template + "Simulation stopped"

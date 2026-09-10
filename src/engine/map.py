@@ -1,6 +1,6 @@
 from __future__ import annotations
-from enum import Enum
 from typing import Tuple, Any
+
 
 class Map():
     def __init__(self) -> None:

@@ -1,7 +1,8 @@
 from pick import pick
 from pathlib import Path
-from parser.errors import Colors
+from parser.errors import Colors, SimulationStop
 from typing import Any
+import sys
 
 
 class EmptyMapFolder(Exception):
@@ -25,7 +26,7 @@ class MapMenu():
                 if self.maps_dir.is_file():
                     return self.maps_dir
         except ValueError:
-            print(EmptyMapFolder())
+            raise EmptyMapFolder()
 
     def get_name(self, path: Path) -> str:
         return path.parts[len(path.parts) - 1]

@@ -1,6 +1,7 @@
 from __future__ import annotations
 from typing import Tuple, Any
 from . import errors
+import sys
 
 
 class Color():
@@ -43,10 +44,10 @@ class Parse():
                     self.check_line(key, info)
                     self.parse_key_info(key, info)
                     if self.nb_drones_check == 0:
-                        self.err.append(errors.MapFileError.msg(self.nb_line, "<nb_drones> must be the first parameter defined"))
+                        self.err.append(errors.MapFileError.msg("<nb_drones> must be the first line to be defined", self.nb_line))
                         self.nb_drones_check = 1
                 except ValueError:
-                    print(errors.MapFileError.msg(self.nb_line, "No key found (':' missing)"))
+                    print(errors.MapFileError.msg("No key found (':' missing)", self.nb_line))
                 except errors.MapFileError as e:
                     self.err.append(str(e))
             if self.err:
@@ -54,7 +55,11 @@ class Parse():
                     print(error)
                 raise errors.ParsingError
         except FileNotFoundError:
-            print(errors.MapFileError.msg(self.nb_line, "File does not exist"))
+            print(errors.MapFileError.msg("File does not exist"))
+            sys.exit(0)
+        except PermissionError:
+            print(errors.MapFileError.msg("Permission denied"))
+            sys.exit(0)
 
     def check_line(self, key: str, info: str) -> None:
         m_start = info.find("[")
@@ -137,7 +142,7 @@ class Parse():
             if hub_info["name"] in self.hub_name:
                 self.err.append(errors.HubError(self.nb_line, f"'{hub_info['name']}' already defined earlier"))
             self.hub_name.append(hub_info["name"])
-            hub_info["metadata"] = self.parse_metadata(hub_info["name"], line[metadata_index:], default_metadata)
+            hub_info["metadata"]: dict = self.parse_metadata(hub_info["name"], line[metadata_index:], default_metadata)
             return {**default_info, **hub_info}
         else:
             tmp_line = line.strip()
@@ -148,9 +153,11 @@ class Parse():
             hub_info["metadata"] = default_metadata
             return {**default_info, **hub_info}
 
-    def parse_metadata(self, name: str, info: str, default_metadata: dict) -> dict:
-        info = [i.split("=") for i in info.strip("[]").split()]
+    def parse_metadata(self, name: str, info_metadata: str, default_metadata: dict) -> dict:
+        info: list = [i.split("=") for i in info_metadata.strip("[]").split()]
+        verif_format: list
         for verif_format in info:
+            print(verif_format.__class__.__name__)
             if len(verif_format) == 1:
                 verif_format.append("undefined")
             elif len(verif_format) == 2 and verif_format[1] == "":
@@ -189,7 +196,7 @@ class Parse():
             link = line[:metadata_index].strip().split("-")
             if len(link) != 2 or "" in link:
                 self.err.append(errors.ConnectionError(self.nb_line, "Connection invalid, follow <from-to>"))
-                link = [None, None]
+                link = ["None", "None"]
             info = [i.split("=") for i in line[metadata_index:].strip("[]").split()]
             for verif_format in info:
                 if len(verif_format) == 1:
