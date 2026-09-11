@@ -1,13 +1,17 @@
 from pick import pick
 from pathlib import Path
-from parser.errors import Colors, SimulationStop
+from parser.errors import Colors
 from typing import Any
-import sys
 
 
 class EmptyMapFolder(Exception):
     def __init__(self) -> None:
-        self.template = Colors.FAIL + Colors.BOLD + "[EmptyMapFolder] " + Colors.ENDC
+        self.template = (
+                f'{Colors.FAIL}'
+                f'{Colors.BOLD}'
+                f'[EmptyMapFolder] '
+                f'{Colors.ENDC}'
+        )
 
     def __str__(self) -> Any:
         return self.template + "Map Folder is empty"
@@ -20,7 +24,11 @@ class MapMenu():
     def choose(self) -> Path:
         try:
             while True:
-                dir = [self.get_name(path) for path in self.maps_dir.iterdir() if path.is_dir() or path.suffix.lower() == ".txt"]
+                dir = [
+                    self.get_name(path)
+                    for path in self.maps_dir.iterdir()
+                    if path.is_dir() or path.suffix.lower() == ".txt"
+                ]
                 path, b = pick(dir, "Choose your map")
                 self.maps_dir /= path
                 if self.maps_dir.is_file():

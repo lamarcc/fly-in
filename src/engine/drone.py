@@ -48,7 +48,7 @@ class Drone():
             return
         self.path.remove(self.pos)
 
-    def check_connection_capacity(self, destination: Hub | Connection) -> Any | bool:
+    def check_connection_capacity(self, destination: Hub | Connection) -> Any:
         if self.pos.is_connected_to(destination):
             connection = self.pos.get_this_connection(destination)
             return connection.passed < connection.max_capacity

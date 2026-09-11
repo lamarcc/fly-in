@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Tuple, Any
+from typing import Any
 from . import errors
 import sys
 
@@ -44,10 +44,16 @@ class Parse():
                     self.check_line(key, info)
                     self.parse_key_info(key, info)
                     if self.nb_drones_check == 0:
-                        self.err.append(errors.MapFileError.msg("<nb_drones> must be the first line to be defined", self.nb_line))
+                        self.err.append(errors.MapFileError.msg(
+                            "<nb_drones> must be the first line to be defined",
+                            self.nb_line)
+                        )
                         self.nb_drones_check = 1
                 except ValueError:
-                    print(errors.MapFileError.msg("No key found (':' missing)", self.nb_line))
+                    print(errors.MapFileError.msg(
+                        "No key found (':' missing)",
+                        self.nb_line)
+                    )
                 except errors.MapFileError as e:
                     self.err.append(str(e))
             if self.err:
@@ -66,10 +72,18 @@ class Parse():
         m_end = info.find("]")
         if m_start != -1 and m_end != -1:
             tmp = info.replace(info[m_start:m_end + 1], "")
-            if (key == "hub" and len(tmp.split()) > 3) or (key == "connection" and len(tmp.split()) > 1):
+            parts = tmp.split()
+            if (
+                (key == "hub" and len(parts) > 3)
+                or (key == "connection" and len(parts) > 1)
+            ):
                 self.err.append(errors.InvalidLineError(self.nb_line))
         else:
-            if (key == "hub" and len(info.split()) > 3) or (key == "connection" and len(info.split()) > 1):
+            parts = info.split()
+            if (
+                (key == "hub" and len(parts) > 3)
+                or (key == "connection" and len(parts) > 1)
+            ):
                 self.err.append(errors.InvalidLineError(self.nb_line))
 
     def parse_key_info(self, key: str, info: str) -> None:
@@ -133,7 +147,7 @@ class Parse():
     def parse_hub(self, line: str) -> dict:
         default_info = {"name": "undefined", "pos_x": "undefined", "pos_y": "undefined"}
         default_metadata = {"zone": "normal", "max_drones": "1", "color": "none"}
-        hub_info = {}
+        hub_info: dict[str, Any] = {}
         tmp_line = ""
         metadata_index = line.find("[")
         if metadata_index != -1:
@@ -142,7 +156,7 @@ class Parse():
             if hub_info["name"] in self.hub_name:
                 self.err.append(errors.HubError(self.nb_line, f"'{hub_info['name']}' already defined earlier"))
             self.hub_name.append(hub_info["name"])
-            hub_info["metadata"]: dict = self.parse_metadata(hub_info["name"], line[metadata_index:], default_metadata)
+            hub_info["metadata"] = self.parse_metadata(hub_info["name"], line[metadata_index:], default_metadata)
             return {**default_info, **hub_info}
         else:
             tmp_line = line.strip()
@@ -157,7 +171,6 @@ class Parse():
         info: list = [i.split("=") for i in info_metadata.strip("[]").split()]
         verif_format: list
         for verif_format in info:
-            print(verif_format.__class__.__name__)
             if len(verif_format) == 1:
                 verif_format.append("undefined")
             elif len(verif_format) == 2 and verif_format[1] == "":

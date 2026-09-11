@@ -1,8 +1,9 @@
 from engine import Connection, Simulation, Map
 from math import sqrt
-from typing import Tuple, Any
+from typing import Tuple
 import pygame
 import time
+
 
 class Color():
     rgb = {
@@ -40,16 +41,21 @@ class Visualizer():
     def create_window(self, movement_history: dict) -> None:
         self.define_window_values()
         self.movement_history = movement_history
-        self.screen = pygame.display.set_mode((self.width, self.height), pygame.RESIZABLE)
+        self.screen = pygame.display.set_mode(
+            (self.width, self.height),
+            pygame.RESIZABLE
+        )
         pygame.display.set_caption("Fly-in")
         pygame.font.init()
         self.draw_map()
         self.idx = 0
         self.running = True
+        clock = pygame.time.Clock()
         while self.running:
             self.fast_play()
             for event in pygame.event.get():
                 self.catch_event(event)
+            clock.tick(30)
             pygame.display.flip()
 
     def define_window_values(self) -> None:
@@ -67,7 +73,10 @@ class Visualizer():
         self.get_offset()
 
     def get_max_min_pos(self) -> None:
-        self.all_coordinate = [(pos.pos_x, pos.pos_y) for pos in self.map.hubs.values()]
+        self.all_coordinate = [
+            (pos.pos_x, pos.pos_y)
+            for pos in self.map.hubs.values()
+        ]
         self.max_x = max(x for x, y in self.all_coordinate)
         self.min_x = min(x for x, y in self.all_coordinate)
         self.max_y = max(y for x, y in self.all_coordinate)
@@ -77,11 +86,17 @@ class Visualizer():
         if self.max_x == self.min_x:
             scale_x = float('inf')
         else:
-            scale_x = (self.width - 2 * self.margin) / (self.max_x - self.min_x)
+            scale_x = (
+                (self.width - 2 * self.margin)
+                / (self.max_x - self.min_x)
+            )
         if self.max_y == self.min_y:
             scale_y = float('inf')
         else:
-            scale_y = (self.height - 2 * self.margin) / (self.max_y - self.min_y)
+            scale_y = (
+                (self.height - 2 * self.margin)
+                / (self.max_y - self.min_y)
+            )
         self.scale = min(scale_x, scale_y)
 
     def get_min_distance_between_hub(self) -> None:
@@ -90,7 +105,10 @@ class Visualizer():
             for other_hub in self.map.hubs.values():
                 if other_hub is hub:
                     continue
-                distance = sqrt((other_hub.pos_x - hub.pos_x)**2 + (other_hub.pos_y - hub.pos_y)**2)
+                distance = sqrt(
+                    (other_hub.pos_x - hub.pos_x) ** 2
+                    + (other_hub.pos_y - hub.pos_y)**2
+                )
                 if self.distance_min > distance:
                     self.distance_min = distance
 
@@ -104,8 +122,16 @@ class Visualizer():
     def get_offset(self) -> None:
         self.map_width = (self.max_x - self.min_x) * self.scale
         self.map_height = (self.max_y - self.min_y) * self.scale
-        self.offset_x = self.margin + (self.width - 2 * self.margin - self.map_width) / 2
-        self.offset_y = self.margin + (self.height - 2 * self.margin - self.map_height) / 2
+        self.offset_x = (
+                self.margin
+                + (self.width - 2 * self.margin - self.map_width)
+                / 2
+        )
+        self.offset_y = (
+                self.margin
+                + (self.height - 2 * self.margin - self.map_height)
+                / 2
+        )
 
     def create_images(self) -> None:
         self.image = []
@@ -113,9 +139,17 @@ class Visualizer():
         for i in range(self.lapmax):
             img = pygame.Surface((self.width, self.height), pygame.SRCALPHA)
             self.image.append(img)
-        self.background = pygame.Surface((self.width, self.height), pygame.SRCALPHA)
+        self.background = pygame.Surface(
+            (self.width, self.height),
+            pygame.SRCALPHA
+        )
 
-    def print_text(self, text: str, size: int, pos: Tuple[float, float]) -> None:
+    def print_text(
+            self,
+            text: str,
+            size: int,
+            pos: Tuple[float, float]
+    ) -> None:
         font = pygame.font.SysFont(None, size)
         show_text = font.render(text, True, Color.rgb['white'])
         self.screen.blit(show_text, pos)
@@ -123,7 +157,11 @@ class Visualizer():
     def print_info(self) -> None:
         self.print_text(f'{self.idx} / {self.lapmax - 1}', 60, (20, 20))
         self.print_text("Escape: Close window", 20, (20, self.height - 70))
-        self.print_text("Left-Right Arrow: Previous/Next Image", 20, (20, self.height - 50))
+        self.print_text(
+            "Left-Right Arrow: Previous/Next Image",
+            20,
+            (20, self.height - 50),
+        )
         self.print_text("Up-Down Arrow: Fast play", 20, (20, self.height - 30))
 
     def show_image(self) -> None:
@@ -160,7 +198,12 @@ class Visualizer():
         h_text = pygame.font.SysFont(None, 16)
         for hub in self.map.hubs.values():
             pos_x, pos_y = self.pixel_pos(hub.pos_x, hub.pos_y)
-            pygame.draw.circle(self.background, Color.rgb[hub.color], (pos_x, pos_y), self.hub_r)
+            pygame.draw.circle(
+                self.background,
+                Color.rgb[hub.color],
+                (pos_x, pos_y),
+                self.hub_r
+            )
             name = self.contract_name(hub.name)
             hub_name = h_text.render(name, True, (255, 255, 255))
             shadow = h_text.render(name, True, Color.rgb['black'])
@@ -175,7 +218,13 @@ class Visualizer():
             x1, y1 = self.pixel_pos(x, y)
             x, y = connection.hub_b.get_pos()
             x2, y2 = self.pixel_pos(x, y)
-            pygame.draw.line(self.background, (100, 100, 100), (x1, y1), (x2, y2), 5)
+            pygame.draw.line(
+                self.background,
+                (100, 100, 100),
+                (x1, y1),
+                (x2, y2),
+                5
+            )
 
     def draw_drones(self) -> None:
         i = 0
@@ -190,19 +239,37 @@ class Visualizer():
                     x, y = self.pixel_pos(mid_x, mid_y)
                     pygame.draw.circle(img, Color.rgb['gray'], (x, y), 8)
                     pygame.draw.circle(img, Color.rgb['white'], (x, y), 6)
-                    text = d_text.render(str(d_number), True, Color.rgb['black'])
+                    text = d_text.render(
+                        str(d_number),
+                        True,
+                        Color.rgb['black']
+                    )
                     pos = text.get_rect(center=(x, y))
                     img.blit(text, pos)
                 else:
                     pos_x, pos_y = self.pixel_pos(d_pos.pos_x, d_pos.pos_y)
-                    pygame.draw.circle(img, Color.rgb['gray'], (pos_x, pos_y + 7), 10)
-                    pygame.draw.circle(img, Color.rgb['white'], (pos_x, pos_y + 7), 8)
-                    text = d_text.render(str(d_number), True, Color.rgb['black'])
+                    pygame.draw.circle(
+                        img,
+                        Color.rgb['gray'],
+                        (pos_x, pos_y + 7),
+                        10
+                    )
+                    pygame.draw.circle(
+                        img,
+                        Color.rgb['white'],
+                        (pos_x, pos_y + 7),
+                        8
+                    )
+                    text = d_text.render(
+                        str(d_number),
+                        True,
+                        Color.rgb['black']
+                    )
                     pos = text.get_rect(center=(pos_x, pos_y + 7))
                     img.blit(text, pos)
             i += 1
 
-    def catch_event(self, event) -> None:
+    def catch_event(self, event: pygame.event.Event) -> None:
         if event.type == pygame.QUIT:
             self.running = False
         if event.type == pygame.KEYDOWN:
@@ -230,7 +297,7 @@ class Visualizer():
             self.show_image()
             time.sleep(0.05)
 
-    def wich_key(self, key) -> None:
+    def wich_key(self, key: pygame.event.Event) -> None:
         if key == pygame.K_ESCAPE:
             self.running = False
         if key == pygame.K_RIGHT:

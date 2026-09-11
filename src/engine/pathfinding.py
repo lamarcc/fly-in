@@ -8,7 +8,13 @@ class PathfindingError(Exception):
         self.message = message
 
     def __str__(self) -> Any:
-        error_type = Colors.FAIL + Colors.BOLD + "[PathfindingError] " + Colors.ENDC + Colors.BOLD
+        error_type = (
+                f'{Colors.FAIL}'
+                f'{Colors.BOLD}'
+                f'[PathfindingError] '
+                f'{Colors.ENDC}'
+                f'{Colors.BOLD}'
+        )
         return error_type + self.message + Colors.ENDC
 
 
@@ -39,7 +45,7 @@ class Pathfinding():
                     self.path[hub_to] = hub
             self.zone.pop(hub)
         full_path = self.get_full_path()
-        if self.path_found == False:
+        if self.path_found is False:
             raise PathfindingError("No valid path found")
         return full_path
 

@@ -1,5 +1,6 @@
 from typing import Any, Optional
 
+
 class Colors():
     HEADER = '\033[95m'
     OKBLUE = '\033[94m'
@@ -27,7 +28,13 @@ class MapFileError(Exception):
         self.line = line
 
     def __str__(self) -> Any:
-        error_type = Colors.FAIL + Colors.BOLD + "[MapFileError] " + Colors.ENDC + Colors.BOLD
+        error_type = (
+                f'{Colors.FAIL}'
+                f'{Colors.BOLD}'
+                f'[MapFileError] '
+                f'{Colors.ENDC}'
+                f'{Colors.BOLD}'
+        )
         return error_type + f"Line {self.line}: " + Colors.ENDC
 
     @staticmethod
@@ -39,7 +46,14 @@ class MapFileError(Exception):
 
     @staticmethod
     def warning(line: int, message: str) -> Any:
-        warning = Colors.WARNING + Colors.BOLD + "[MapFileWarning] " + Colors.ENDC + Colors.BOLD + f"Line {line}: "
+        warning = (
+                f'{Colors.WARNING}'
+                f'{Colors.BOLD}'
+                f'[MapFileWarning] '
+                f'{Colors.ENDC}'
+                f'{Colors.BOLD}'
+                f'Line {line}: '
+        )
         return warning + message + Colors.ENDC
 
 
@@ -117,7 +131,12 @@ class ConnectionError(MapFileError):
 
 class SimulationStop(Exception):
     def __init__(self) -> None:
-        self.template = Colors.WARNING + Colors.BOLD + "[SimulationState] " + Colors.ENDC
+        self.template = (
+                f'{Colors.WARNING}'
+                f'{Colors.BOLD}'
+                f'[SimulationState] '
+                f'{Colors.ENDC}'
+        )
 
     def __str__(self) -> Any:
         return self.template + "Simulation stopped"
