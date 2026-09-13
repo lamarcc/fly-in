@@ -11,11 +11,12 @@ The program parses a custom map file format, builds a graph model of the network
 ## Instructions
 
 ```bash
-make install        # creates a venv and installs dependencies
-make run MAP=path    # runs the simulation on a given map file
-make debug           # runs under pdb
+make install       # uv sync — creates the venv and installs dependencies
+make run             # uv run src/main.py — runs the simulation on a map
+make debug           # runs the main script under pdb
 make lint            # flake8 + mypy (standard flags)
-make clean            # removes caches
+make lint-strict      # flake8 + mypy --strict
+make clean            # removes __pycache__ and .mypy_cache
 ```
 
 The program reads a map file (see subject format), then outputs the movement of every drone turn by turn until all reach the end zone, with terminal and/or pygame visual feedback.
@@ -74,7 +75,7 @@ Total: 2 turns.
 
 - 42 subject document (Fly-in, v1.6)
 - Standard Dijkstra references (CLRS / graph theory coursework)
-- Python `typing`/`mypy` docs, pygame official docs
+- Python `typing`/`mypy` docs, pygame official docs, `uv` documentation
 
 ### AI usage
 

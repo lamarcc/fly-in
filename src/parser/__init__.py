@@ -1,4 +1,4 @@
 from .parsing import Parse
-from .errors import ParsingError, SimulationStop
+from .errors import ParsingError, SimulationStop, MapFileError
 
-__all__ = ["Parse", "ParsingError", "SimulationStop"]
+__all__ = ["Parse", "ParsingError", "SimulationStop", "MapFileError"]
