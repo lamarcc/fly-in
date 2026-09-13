@@ -372,11 +372,3 @@ class Parse():
                 "hub_b": link[1],
                 "metadata": default_metadata
             }
-    #
-    # def verif_all(self) -> None:
-    #     if "None" in self.start_hub.values():
-    #         self.is_valid = False
-    #     if "None" in self.end_hub.values():
-    #         self.is_valid = False
-    #     if "None" in self.start_hub.values():
-    #         self.is_valid = False

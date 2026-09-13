@@ -192,10 +192,11 @@ class Visualizer():
         return pos_x, pos_y
 
     def contract_name(self, name: str) -> str:
+        character = list(name[0])
         if len(name) > 2:
-            character = list(name[0])
             number = [i for i in name if i.isdigit()]
-        return ''.join(character+number).upper()
+            return ''.join(character+number).upper()
+        return ''.join(character).upper()
 
     def draw_hub(self) -> None:
         h_text = pygame.font.SysFont(None, 16)
