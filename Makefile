@@ -1,7 +1,6 @@
 NAME        = codexion
 UV          = uv
 PYTHON      = python3
-FLAKE       = flake8
 RM          = rm -rf
 SRCDIR      = src
 MYPYFLAGS   = --warn-return-any --warn-unused-ignores --ignore-missing-imports --disallow-untyped-defs --check-untyped-defs
@@ -14,13 +13,15 @@ install:
 run:
 	$(UV) run $(SRCS)
 
-clean:
-	$(RM) $(OBJDIR)
+debug:
+	$(UV) run $(PYTHON) -m pdb $(SRCS)
 
 lint:
-	$(FLAKE) $(SRCDIR)/ && $(PYTHON) -m mypy $(SRCDIR)/ $(MYPYFLAGS)
+	$(UV) run flake8 $(SRCDIR)
+	$(UV) run mypy $(SRCDIR) $(MYPYFLAGS)
 
-debug:
-	$(PYTHON) -m pdb $(SRCS)
+clean:
+	find $(SRCDIR) -type d -name "__pycache__" -exec rm -rf {} +
+	$(RM) .mypy_cache
 
-.PHONY: install run clean lint debug
+.PHONY: install run debug lint lint-strict clean

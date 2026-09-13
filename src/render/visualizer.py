@@ -52,6 +52,9 @@ class Visualizer():
         self.running = True
         clock = pygame.time.Clock()
         while self.running:
+            if self.idx == self.lapmax - 1:
+                time.sleep(0.5)
+                self.running = False
             self.fast_play()
             for event in pygame.event.get():
                 self.catch_event(event)
