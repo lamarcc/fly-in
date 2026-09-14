@@ -4,10 +4,18 @@ from typing import Any
 
 
 class PathfindingError(Exception):
+    """Exception raised when no path is found in the map."""
+
     def __init__(self, message: str) -> None:
+        """Initialize the exception with an error message.
+
+        Args:
+            message: Description of the pathfinding error.
+        """
         self.message = message
 
     def __str__(self) -> Any:
+        """Return the formatted exception message."""
         error_type = (
                 f'{Colors.FAIL}'
                 f'{Colors.BOLD}'
@@ -19,7 +27,18 @@ class PathfindingError(Exception):
 
 
 class Pathfinding():
+    """Implements the modified Dijkstra algorithm to find the optimal path.
+
+    Takes zone types (normal, priority, restricted, blocked) into account,
+    which affect the path cost.
+    """
+
     def __init__(self, map: Map) -> None:
+        """Initialize the pathfinding algorithm.
+
+        Args:
+            map: The map to search for a path on.
+        """
         self.start: Hub = map.start_hub
         self.end: Hub = map.end_hub
         self.path: dict = {}
@@ -34,10 +53,24 @@ class Pathfinding():
                 self.zone[hub] = float('inf')
 
     def find_path(self) -> list:
+        """Find the optimal path from the start hub to the end hub.
+
+        Uses Dijkstra's algorithm with costs depending on the zone type.
+
+        Returns:
+            list: List of hubs forming the optimal path.
+
+        Raises:
+            PathfindingError: If no valid path exists.
+        """
         while len(self.zone.keys()) != 0:
             hub = self.get_lowest_hub()
             for hub_to in hub.connected_to:
                 if hub_to not in self.zone.keys():
+                    continue
+                if hub_to.get_this_connection(hub).max_capacity == 0:
+                    continue
+                if hub_to.max_capacity == 0:
                     continue
                 cost = self.get_cost(hub_to, hub)
                 if cost:
@@ -50,6 +83,20 @@ class Pathfinding():
         return full_path
 
     def get_cost(self, hub_to: Hub, actual_hub: Hub) -> Any:
+        """Calculate the cost of moving to a hub based on the zone type.
+
+        Costs:
+        - NORMAL: 1
+        - PRIORITY: 0.5
+        - RESTRICTED: 2
+
+        Args:
+            hub_to: The hub to calculate the cost for.
+            actual_hub: The current hub.
+
+        Returns:
+            float: The new path cost, or None if no improvement is made.
+        """
         if hub_to.zone_type == ZoneType.NORMAL:
             if self.zone[actual_hub] + 1 < self.zone[hub_to]:
                 return self.zone[actual_hub] + 1
@@ -62,6 +109,11 @@ class Pathfinding():
         return
 
     def get_full_path(self) -> list:
+        """Reconstruct the full path by walking back through the parents.
+
+        Returns:
+            list: The full path from the start hub to the end hub.
+        """
         for hubs in self.path.keys():
             hub = hubs
             path = [hub]
@@ -76,6 +128,11 @@ class Pathfinding():
             return [self.start]
 
     def get_lowest_hub(self) -> Any:
+        """Find the unprocessed hub with the lowest current cost.
+
+        Returns:
+            Hub: The hub with the smallest current cost.
+        """
         lowest_cost = min([v for k, v in self.zone.items()])
         r_dict = {v: k for k, v in self.zone.items()}
         return r_dict[lowest_cost]

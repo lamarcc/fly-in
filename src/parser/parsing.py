@@ -276,7 +276,6 @@ class Parse():
                 "color" in new_metadata
                 and new_metadata["color"] not in Color.list
             ):
-                print(new_metadata["color"])
                 print(errors.MapFileError.warning(
                     self.nb_line,
                     f"Unknown color for hub '{name}', "
@@ -302,7 +301,6 @@ class Parse():
             "max_link_capacity": 1
         }
         metadata_index = line.find("[")
-        invalid_data = []
         if metadata_index != -1:
             link = line[:metadata_index].strip().split("-")
             if len(link) != 2 or "" in link:
@@ -323,13 +321,16 @@ class Parse():
                         "follow <metadata=value>"
                     ))
                     verif_format.append("undefined")
-                elif len(verif_format) == 2 and verif_format[1] == "":
+                elif (
+                        verif_format[0] == "max_link_capacity"
+                        and verif_format[1] == ""
+                ):
                     print(errors.MapFileError.warning(
                         self.nb_line,
                         f"Value is missing for '{verif_format[0]}', "
                         "'1' set by default"
                     ))
-                    verif_format[1] = "None"
+                    verif_format[1] = "1"
                 elif len(verif_format) > 2:
                     info.remove(verif_format)
                     self.err.append(errors.MetadataError(
@@ -340,19 +341,18 @@ class Parse():
             try:
                 for check_metadata in metadata.keys():
                     if check_metadata != "max_link_capacity":
-                        invalid_data.append(check_metadata)
-                if len(invalid_data):
-                    self.err.append(errors.MetadataError(
-                        self.nb_line,
-                        f"Unknown metadata '{invalid_data}'"
-                    ))
-                metadata["max_link_capacity"] = int(
-                    metadata["max_link_capacity"]
-                )
-                if metadata["max_link_capacity"] < 0:
-                    self.err.append(errors.InvalidValue(
-                        self.nb_line,
-                        "Invalid 'max_link_capacity' value, minimum is 0"))
+                        self.err.append(errors.MetadataError(
+                            self.nb_line,
+                            f"Unknown metadata '{check_metadata}'"
+                        ))
+                else:
+                    metadata["max_link_capacity"] = int(
+                        metadata["max_link_capacity"]
+                    )
+                    if metadata["max_link_capacity"] < 0:
+                        self.err.append(errors.InvalidValue(
+                            self.nb_line,
+                            "Invalid 'max_link_capacity' value, minimum is 0"))
             except ValueError:
                 self.err.append(errors.ConnectionError(
                     self.nb_line,
