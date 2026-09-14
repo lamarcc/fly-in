@@ -6,6 +6,7 @@ import time
 
 
 class Color():
+    """RGB color values for visualization (name → (R, G, B))."""
     rgb = {
             "none": (200, 200, 200),
             "red": (255, 0, 0),
@@ -34,11 +35,18 @@ class Color():
 
 
 class Visualizer():
+    """Visualize a drone simulation map and movement history using Pygame."""
     def __init__(self, map: Map, simulation: Simulation) -> None:
+        """Initialize the visualizer with a map and simulation instance."""
         self.map = map
         self.simulation = simulation
 
     def create_window(self, movement_history: dict) -> None:
+        """Create and run the Pygame window to display the simulation.
+
+        Initializes window settings, draws the map, and runs the main event loop.
+        Stops automatically after the last lap in movement_history.
+        """
         self.define_window_values()
         self.movement_history = movement_history
         self.screen = pygame.display.set_mode(
@@ -62,11 +70,13 @@ class Visualizer():
             pygame.display.flip()
 
     def define_window_values(self) -> None:
+        """Set default window dimensions and trigger layout calculations."""
         self.width = 1000
         self.height = 700
         self.resize_window()
 
     def resize_window(self) -> None:
+        """Recalculate layout metrics (margins, scale, hub radius, offsets)."""
         self.margin = 100
         self.min_spacing = 10
         self.get_max_min_pos()
@@ -76,6 +86,7 @@ class Visualizer():
         self.get_offset()
 
     def get_max_min_pos(self) -> None:
+        """Compute min/max X and Y coordinates across all hubs."""
         self.all_coordinate = [
             (pos.pos_x, pos.pos_y)
             for pos in self.map.hubs.values()
@@ -86,6 +97,7 @@ class Visualizer():
         self.min_y = min(y for x, y in self.all_coordinate)
 
     def get_scale(self) -> None:
+        """Compute the uniform scale factor to fit the map in the window."""
         if self.max_x == self.min_x:
             scale_x = float('inf')
         else:
@@ -103,6 +115,7 @@ class Visualizer():
         self.scale = min(scale_x, scale_y)
 
     def get_min_distance_between_hub(self) -> None:
+        """Find the minimum Euclidean distance between any two hubs."""
         self.distance_min = float('inf')
         for hub in self.map.hubs.values():
             for other_hub in self.map.hubs.values():
@@ -116,6 +129,10 @@ class Visualizer():
                     self.distance_min = distance
 
     def get_hub_radius(self) -> None:
+        """Compute hub circle radius based on scale and minimum hub distance.
+
+        Clamps the radius between 5 and 30 pixels.
+        """
         hub_r_min = 5
         hub_r_max = 30
         self.hub_r = (self.scale * self.distance_min - self.min_spacing) / 2
@@ -123,6 +140,7 @@ class Visualizer():
         self.hub_r = min(self.hub_r, hub_r_max)
 
     def get_offset(self) -> None:
+        """Compute X/Y offsets to center the scaled map within the window."""
         self.map_width = (self.max_x - self.min_x) * self.scale
         self.map_height = (self.max_y - self.min_y) * self.scale
         self.offset_x = (
@@ -137,6 +155,7 @@ class Visualizer():
         )
 
     def create_images(self) -> None:
+        """Create off-screen surfaces for each lap and a background layer."""
         self.image = []
         self.lapmax = len(self.movement_history.keys())
         for i in range(self.lapmax):
@@ -153,11 +172,13 @@ class Visualizer():
             size: int,
             pos: Tuple[float, float]
     ) -> None:
+        """Render and blit a text string at the given position and font size."""
         font = pygame.font.SysFont(None, size)
         show_text = font.render(text, True, Color.rgb['white'])
         self.screen.blit(show_text, pos)
 
     def print_info(self) -> None:
+        """Draw UI info text (lap counter and key hints) on the screen."""
         self.print_text(f'{self.idx} / {self.lapmax - 1}', 60, (20, 20))
         self.print_text("Escape: Close window", 20, (20, self.height - 70))
         self.print_text(
@@ -168,12 +189,14 @@ class Visualizer():
         self.print_text("Up-Down Arrow: Fast play", 20, (20, self.height - 30))
 
     def show_image(self) -> None:
+        """Clear the screen and draw the background and current lap image."""
         self.screen.fill((30, 30, 30))
         self.print_info()
         self.screen.blit(self.background, (0, 0))
         self.screen.blit(self.image[self.idx], (0, 0))
 
     def draw_map(self) -> None:
+        """Prepare images and draw the static map (connections, hubs, drones)."""
         self.create_images()
         self.screen.fill((30, 30, 30))
         self.draw_connection()
@@ -181,6 +204,7 @@ class Visualizer():
         self.draw_drones()
 
     def pixel_pos(self, x: float, y: float) -> Tuple[float, float]:
+        """Convert map coordinates (x, y) to window pixel coordinates."""
         if self.max_x == self.min_x:
             pos_x = self.width / 2
         else:
@@ -192,6 +216,7 @@ class Visualizer():
         return pos_x, pos_y
 
     def contract_name(self, name: str) -> str:
+        """Shorten hub names for display (first letter + digits, uppercased)."""
         character = list(name[0])
         if len(name) > 2:
             number = [i for i in name if i.isdigit()]
@@ -199,6 +224,7 @@ class Visualizer():
         return ''.join(character).upper()
 
     def draw_hub(self) -> None:
+        """Draw all hubs as colored circles with shortened names on the background."""
         h_text = pygame.font.SysFont(None, 16)
         for hub in self.map.hubs.values():
             pos_x, pos_y = self.pixel_pos(hub.pos_x, hub.pos_y)
@@ -217,6 +243,7 @@ class Visualizer():
             self.background.blit(hub_name, text_pos)
 
     def draw_connection(self) -> None:
+        """Draw all connections as gray lines between hub centers."""
         for connection in self.map.connections.values():
             x, y = connection.hub_a.get_pos()
             x1, y1 = self.pixel_pos(x, y)
@@ -231,6 +258,10 @@ class Visualizer():
             )
 
     def draw_drones(self) -> None:
+        """Draw drones for each lap on their respective image surfaces.
+
+        Drones on connections appear at the midpoint; others at hub positions.
+        """
         i = 0
         d_text = pygame.font.SysFont(None, 16)
         for img in self.image:
@@ -274,6 +305,10 @@ class Visualizer():
             i += 1
 
     def catch_event(self, event: pygame.event.Event) -> None:
+        """Handle Pygame events: quit, key presses, and window resize.
+
+        On resize, recalculates layout and redraws the map and current image.
+        """
         if event.type == pygame.QUIT:
             self.running = False
         if event.type == pygame.KEYDOWN:
@@ -287,6 +322,10 @@ class Visualizer():
             self.show_image()
 
     def fast_play(self) -> None:
+        """Advance or rewind laps quickly when Up/Down arrows are held.
+
+        Adds a small delay (0.05s) between frames for controlled fast playback.
+        """
         pressed = pygame.key.get_pressed()
         if pressed[pygame.K_UP]:
             if self.idx >= self.lapmax - 1:
@@ -302,6 +341,10 @@ class Visualizer():
             time.sleep(0.05)
 
     def wich_key(self, key: pygame.event.Event) -> None:
+        """Handle individual key presses: Escape to quit, Left/Right to step laps.
+
+        Bounds-checks the current lap index before changing images.
+        """
         if key == pygame.K_ESCAPE:
             self.running = False
         if key == pygame.K_RIGHT:

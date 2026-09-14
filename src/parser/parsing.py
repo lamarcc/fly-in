@@ -19,7 +19,7 @@ class Color():
 class Parse():
     """Allowed color names for hubs and metadata."""
     def __init__(self) -> None:
-    """Initialize parser state and storage for hubs, connections, and errors."""
+        """Initialize parser state and storage for hubs, connections, and errors."""
         self.nb_drones: Any = None
         self.nb_drones_check: int = 0
         self.start_hub: dict = {}
@@ -251,7 +251,7 @@ class Parse():
             info_metadata: str,
             default_metadata: dict
     ) -> dict:
-    """Parse optional hub metadata (zone, color, max_drones) from a bracketed string.
+        """Parse optional hub metadata (zone, color, max_drones) from a bracketed string.
 
         Applies defaults, validates allowed values, and records errors for bad formats.
         """
