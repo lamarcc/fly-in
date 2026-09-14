@@ -1,12 +1,3 @@
-"""Main entry point for the Fly-in application.
-
-Handles the full execution flow:
-1. Displays the map selection menu
-2. Parses the selected map file
-3. Initializes the simulation
-4. Runs the simulation and shows the visualization
-"""
-
 if __name__ == "__main__":
     try:
         from engine import Simulation, PathfindingError

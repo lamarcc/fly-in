@@ -5,6 +5,7 @@ import sys
 
 
 class Color():
+    """Allowed color names for hubs and metadata."""
     list = [
         "none", "red", "green", "blue", "yellow",
         "orange", "purple", "pink", "brown",
@@ -16,7 +17,9 @@ class Color():
 
 
 class Parse():
+    """Allowed color names for hubs and metadata."""
     def __init__(self) -> None:
+    """Initialize parser state and storage for hubs, connections, and errors."""
         self.nb_drones: Any = None
         self.nb_drones_check: int = 0
         self.start_hub: dict = {}
@@ -29,6 +32,11 @@ class Parse():
         self.err: list = []
 
     def parse(self, file: str) -> None:
+        """Read and parse a map file line by line, collecting hubs, connections, and errors.
+
+        Raises FileNotFoundError or PermissionError if the file cannot be opened.
+        Raises ParsingError if any validation errors were collected.
+        """
         try:
             f = open(file)
             for line in f:
@@ -68,6 +76,10 @@ class Parse():
             sys.exit(0)
 
     def check_line(self, key: str, info: str) -> None:
+        """Validate line structure and field count for 'hub' and 'connection' entries.
+
+        Appends an InvalidLineError to self.err if the line has too many fields.
+        """
         m_start = info.find("[")
         m_end = info.find("]")
         if m_start != -1 and m_end != -1:
@@ -87,6 +99,11 @@ class Parse():
                 self.err.append(errors.InvalidLineError(self.nb_line))
 
     def parse_key_info(self, key: str, info: str) -> None:
+        """Dispatch parsing logic based on the configuration key.
+
+        Handles nb_drones, start_hub, end_hub, hub, and connection keys.
+        Raises or records errors for duplicates, invalid values, or unknown keys.
+        """
         if key == "nb_drones":
             try:
                 if self.nb_drones is None:
@@ -153,6 +170,10 @@ class Parse():
             raise errors.InvalidKeyError(self.nb_line, key)
 
     def try_position(self, hub_info: dict) -> None:
+        """Check that the hub's (x, y) position is unique among existing hubs.
+
+        Converts position strings to integers and records an error if occupied.
+        """
         try:
             x = int(hub_info["pos_x"])
             y = int(hub_info["pos_y"])
@@ -172,6 +193,10 @@ class Parse():
             )
 
     def parse_hub(self, line: str) -> dict:
+        """Parse a hub definition line into a dict with name, position, and metadata.
+
+        Supports optional metadata in brackets; applies defaults if missing.
+        """
         default_info = {
             "name": "undefined",
             "pos_x": "undefined",
@@ -226,6 +251,10 @@ class Parse():
             info_metadata: str,
             default_metadata: dict
     ) -> dict:
+    """Parse optional hub metadata (zone, color, max_drones) from a bracketed string.
+
+        Applies defaults, validates allowed values, and records errors for bad formats.
+        """
         info: list = [i.split("=") for i in info_metadata.strip("[]").split()]
         verif_format: list
         for verif_format in info:
@@ -297,6 +326,11 @@ class Parse():
         return new_metadata
 
     def parse_connection(self, line: str) -> dict:
+        """Parse a connection definition (hubA-hubB) with optional metadata.
+
+        Returns a dict with keys: hub_a, hub_b, and metadata.
+        Records errors for invalid formats, unknown metadata, or bad values.
+        """
         default_metadata = {
             "max_link_capacity": 1
         }
