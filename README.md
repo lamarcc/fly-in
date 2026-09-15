@@ -51,7 +51,7 @@ src/
 
 ## Visual representation
 
-- **Terminal**: colored `D<ID>-<destination>` output per turn, following the exact format required by the subject.
+- **Terminal**: `D<ID>-<destination>` output per turn, following the exact format required by the subject.
 - **Pygame**: a window that visualizes the simulation turn by turn, showing the network of hubs and connections along with the current position of every drone.
 
 ## Example
