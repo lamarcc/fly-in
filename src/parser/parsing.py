@@ -42,7 +42,8 @@ class Parse():
             for line in f:
                 try:
                     self.nb_line += 1
-                    if line.startswith("#"):
+                    line = line.split('#', 1)[0]
+                    if line == "":
                         continue
                     if line.startswith("\n") and len(line) == 1:
                         continue
