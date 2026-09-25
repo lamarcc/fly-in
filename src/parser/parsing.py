@@ -19,7 +19,9 @@ class Color():
 class Parse():
     """Allowed color names for hubs and metadata."""
     def __init__(self) -> None:
-        """Initialize parser state and storage for hubs, connections, and errors."""
+        """Initialize parser state and storage for hubs,
+         connections, and errors.
+        """
         self.nb_drones: Any = None
         self.nb_drones_check: int = 0
         self.start_hub: dict = {}
@@ -32,9 +34,11 @@ class Parse():
         self.err: list = []
 
     def parse(self, file: str) -> None:
-        """Read and parse a map file line by line, collecting hubs, connections, and errors.
+        """Read and parse a map file line by line,
+         collecting hubs, connections, and errors.
 
-        Raises FileNotFoundError or PermissionError if the file cannot be opened.
+        Raises FileNotFoundError or PermissionError if
+         the file cannot be opened.
         Raises ParsingError if any validation errors were collected.
         """
         try:
@@ -79,7 +83,8 @@ class Parse():
     def check_line(self, key: str, info: str) -> None:
         """Validate line structure and field count for 'hub' and 'connection' entries.
 
-        Appends an InvalidLineError to self.err if the line has too many fields.
+        Appends an InvalidLineError to self.err
+         if the line has too many fields.
         """
         m_start = info.find("[")
         m_end = info.find("]")
@@ -103,7 +108,8 @@ class Parse():
         """Dispatch parsing logic based on the configuration key.
 
         Handles nb_drones, start_hub, end_hub, hub, and connection keys.
-        Raises or records errors for duplicates, invalid values, or unknown keys.
+        Raises or records errors for duplicates,
+         invalid values, or unknown keys.
         """
         if key == "nb_drones":
             try:
@@ -205,7 +211,7 @@ class Parse():
         }
         default_metadata = {
             "zone": "normal",
-            "max_drones": "1",
+            "max_drones": 1,
             "color": "none"
         }
         hub_info: dict[str, Any] = {}
@@ -252,9 +258,11 @@ class Parse():
             info_metadata: str,
             default_metadata: dict
     ) -> dict:
-        """Parse optional hub metadata (zone, color, max_drones) from a bracketed string.
+        """Parse optional hub metadata (zone, color, max_drones)
+         from a bracketed string.
 
-        Applies defaults, validates allowed values, and records errors for bad formats.
+        Applies defaults, validates allowed values,
+         and records errors for bad formats.
         """
         info: list = [i.split("=") for i in info_metadata.strip("[]").split()]
         verif_format: list

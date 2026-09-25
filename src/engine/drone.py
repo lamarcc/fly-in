@@ -28,7 +28,8 @@ class Drone():
         """Perform the drone's movement to the next position.
 
         Handles capacity rules and the different zone types.
-        If the drone cannot move forward (insufficient capacity), it stays in place
+        If the drone cannot move forward (insufficient capacity),
+         it stays in place
         and increments the waiting counter.
         """
         if self.pos == self.map.end_hub:
@@ -82,7 +83,8 @@ class Drone():
             destination: The hub the drone wants to move toward.
 
         Returns:
-            bool: True if the connection has available capacity, otherwise False.
+            bool: True if the connection has available capacity,
+             otherwise False.
         """
         if self.pos.is_connected_to(destination):
             connection = self.pos.get_this_connection(destination)

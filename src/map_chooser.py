@@ -34,7 +34,8 @@ class MapMenu():
     def choose(self) -> Path:
         """Display an interactive menu to select a map.
 
-        Lets the user navigate through directories or directly select a map file (.txt).
+        Lets the user navigate through directories or directly
+         select a map file (.txt).
 
         Returns:
             Path: The absolute path of the selected map file.

@@ -156,7 +156,8 @@ class Simulation():
         self.print_movement(self.drones_pos)
 
     def run(self) -> None:
-        """Run the full simulation: pathfinding, initialization, and execution."""
+        """Run the full simulation: pathfinding, initialization, and execution.
+        """
         pathfinder = engine.Pathfinding(self.map)
         path = pathfinder.find_path()
         self.init_drones(path)

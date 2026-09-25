@@ -44,7 +44,8 @@ class Visualizer():
     def create_window(self, movement_history: dict) -> None:
         """Create and run the Pygame window to display the simulation.
 
-        Initializes window settings, draws the map, and runs the main event loop.
+        Initializes window settings, draws the map,
+         and runs the main event loop.
         Stops automatically after the last lap in movement_history.
         """
         self.define_window_values()
@@ -55,8 +56,9 @@ class Visualizer():
         )
         pygame.display.set_caption("Fly-in")
         pygame.font.init()
-        self.draw_map()
         self.idx = 0
+        self.draw_map()
+        self.show_image()
         self.running = True
         clock = pygame.time.Clock()
         while self.running:
@@ -172,7 +174,9 @@ class Visualizer():
             size: int,
             pos: Tuple[float, float]
     ) -> None:
-        """Render and blit a text string at the given position and font size."""
+        """Render and blit a text string at the
+         given position and font size.
+        """
         font = pygame.font.SysFont(None, size)
         show_text = font.render(text, True, Color.rgb['white'])
         self.screen.blit(show_text, pos)
@@ -196,7 +200,9 @@ class Visualizer():
         self.screen.blit(self.image[self.idx], (0, 0))
 
     def draw_map(self) -> None:
-        """Prepare images and draw the static map (connections, hubs, drones)."""
+        """Prepare images and draw the static
+         map (connections, hubs, drones).
+        """
         self.create_images()
         self.screen.fill((30, 30, 30))
         self.draw_connection()
@@ -216,7 +222,9 @@ class Visualizer():
         return pos_x, pos_y
 
     def contract_name(self, name: str) -> str:
-        """Shorten hub names for display (first letter + digits, uppercased)."""
+        """Shorten hub names for display
+         (first letter + digits, uppercased).
+        """
         character = list(name[0])
         if len(name) > 2:
             number = [i for i in name if i.isdigit()]
@@ -224,7 +232,9 @@ class Visualizer():
         return ''.join(character).upper()
 
     def draw_hub(self) -> None:
-        """Draw all hubs as colored circles with shortened names on the background."""
+        """Draw all hubs as colored circles with
+         shortened names on the background.
+        """
         h_text = pygame.font.SysFont(None, 16)
         for hub in self.map.hubs.values():
             pos_x, pos_y = self.pixel_pos(hub.pos_x, hub.pos_y)
