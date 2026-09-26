@@ -88,6 +88,8 @@ class Parse():
         """
         m_start = info.find("[")
         m_end = info.find("]")
+        if key == "start_hub" or key == "end_hub":
+            key = "hub"
         if m_start != -1 and m_end != -1:
             tmp = info.replace(info[m_start:m_end + 1], "")
             parts = tmp.split()
@@ -120,6 +122,9 @@ class Parse():
                             "Cant have less than 1 drone"
                         )
                     self.nb_drones = int(info)
+                    if self.nb_drones > 50:
+                        print(errors.MapFileError.warning(self.nb_line, "For performances issues, the <nb_drones> value has been set to 50"))
+                        self.nb_drones = 50
                     self.nb_drones_check = 1
                 else:
                     raise errors.DoublonError(self.nb_line, key)
