@@ -4,8 +4,8 @@ nb_drones: 51
 start_hub: start 0 0 [color=green]
 hub: waypoint1 1 0 [color=blue]
 hub: waypoint2 2 0 [color=blue]
-end_hub: goal 3 0 [color=red][ewew]
+end_hub: goal 3 0 [color=red zone=normal
 
-connection: start-waypoint1 [max_link_capacity=9][ewqwqe]
+connection: start-waypoint1 [max_link_capacity=9]
 connection: waypoint1-waypoint2
 connection: waypoint2-goal

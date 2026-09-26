@@ -224,9 +224,9 @@ class Parse():
         }
         hub_info: dict[str, Any] = {}
         tmp_line = ""
-        metadata_index = line.find("[")
-        if metadata_index != -1:
-            tmp_line = line[:metadata_index].strip()
+        m_start = line.find("[")
+        if m_start != -1:
+            tmp_line = line[:m_start].strip()
             hub_info = {
                 key: value
                 for key, value
@@ -240,7 +240,7 @@ class Parse():
             self.hub_name.append(hub_info["name"])
             hub_info["metadata"] = self.parse_metadata(
                 hub_info["name"],
-                line[metadata_index:],
+                line[m_start:],
                 default_metadata
             )
             return {**default_info, **hub_info}
@@ -272,8 +272,11 @@ class Parse():
         Applies defaults, validates allowed values,
          and records errors for bad formats.
         """
-        info: list = [i.split("=") for i in info_metadata.strip("[]").split()]
+        m_start = info_metadata.find("[")
+        m_end = info_metadata.find("]")
+        info: list = [i.split("=") for i in info_metadata[m_start + 1:m_end].split()]
         verif_format: list
+        print(info)
         for verif_format in info:
             if len(verif_format) == 1:
                 verif_format.append("undefined")
@@ -302,7 +305,6 @@ class Parse():
             **default_metadata,
             **{key: value for key, value in info}
         }
-        print(new_metadata)
         try:
             for key in new_metadata.keys():
                 if key not in ["zone", "color", "max_drones"]:
@@ -390,7 +392,6 @@ class Parse():
                         "Typing incorrect, follow <metadata=info>"
                     ))
             metadata: dict[str, Any] = {key: value for key, value in info}
-            print(metadata)
             try:
                 for check_metadata in metadata.keys():
                     if check_metadata != "max_link_capacity":
