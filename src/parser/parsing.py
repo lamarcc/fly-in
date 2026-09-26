@@ -123,7 +123,10 @@ class Parse():
                         )
                     self.nb_drones = int(info)
                     if self.nb_drones > 50:
-                        print(errors.MapFileError.warning(self.nb_line, "For performances issues, the <nb_drones> value has been set to 50"))
+                        print(errors.MapFileError.warning(
+                            self.nb_line, "For performance's issues, "
+                            "the <nb_drones> value has capped at 50"
+                        ))
                         self.nb_drones = 50
                     self.nb_drones_check = 1
                 else:
@@ -299,6 +302,7 @@ class Parse():
             **default_metadata,
             **{key: value for key, value in info}
         }
+        print(new_metadata)
         try:
             for key in new_metadata.keys():
                 if key not in ["zone", "color", "max_drones"]:
@@ -386,6 +390,7 @@ class Parse():
                         "Typing incorrect, follow <metadata=info>"
                     ))
             metadata: dict[str, Any] = {key: value for key, value in info}
+            print(metadata)
             try:
                 for check_metadata in metadata.keys():
                     if check_metadata != "max_link_capacity":
@@ -393,14 +398,16 @@ class Parse():
                             self.nb_line,
                             f"Unknown metadata '{check_metadata}'"
                         ))
-                else:
-                    metadata["max_link_capacity"] = int(
-                        metadata["max_link_capacity"]
-                    )
-                    if metadata["max_link_capacity"] < 0:
-                        self.err.append(errors.InvalidValue(
-                            self.nb_line,
-                            "Invalid 'max_link_capacity' value, minimum is 0"))
+                    else:
+                        metadata["max_link_capacity"] = int(
+                            metadata["max_link_capacity"]
+                        )
+                        if metadata["max_link_capacity"] < 0:
+                            self.err.append(errors.InvalidValue(
+                                self.nb_line,
+                                "Invalid 'max_link_capacity' "
+                                "value, minimum is 0"
+                            ))
             except ValueError:
                 self.err.append(errors.ConnectionError(
                     self.nb_line,
