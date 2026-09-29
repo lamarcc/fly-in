@@ -104,14 +104,14 @@ class Visualizer():
             scale_x = float('inf')
         else:
             scale_x = (
-                (self.width - 2 * self.margin)
+                (self.width - (2 * self.margin))
                 / (self.max_x - self.min_x)
             )
         if self.max_y == self.min_y:
             scale_y = float('inf')
         else:
             scale_y = (
-                (self.height - 2 * self.margin)
+                (self.height - (2 * self.margin))
                 / (self.max_y - self.min_y)
             )
         self.scale = min(scale_x, scale_y)
@@ -125,7 +125,7 @@ class Visualizer():
                     continue
                 distance = sqrt(
                     (other_hub.pos_x - hub.pos_x) ** 2
-                    + (other_hub.pos_y - hub.pos_y)**2
+                    + (other_hub.pos_y - hub.pos_y) ** 2
                 )
                 if self.distance_min > distance:
                     self.distance_min = distance
@@ -147,12 +147,12 @@ class Visualizer():
         self.map_height = (self.max_y - self.min_y) * self.scale
         self.offset_x = (
                 self.margin
-                + (self.width - 2 * self.margin - self.map_width)
+                + (self.width - (2 * self.margin) - self.map_width)
                 / 2
         )
         self.offset_y = (
                 self.margin
-                + (self.height - 2 * self.margin - self.map_height)
+                + (self.height - (2 * self.margin) - self.map_height)
                 / 2
         )
 
@@ -212,11 +212,11 @@ class Visualizer():
         if self.max_x == self.min_x:
             pos_x = self.width / 2
         else:
-            pos_x = self.offset_x + (x - self.min_x) * self.scale
+            pos_x = self.offset_x + (self.min_x + x) * self.scale
         if self.max_y == self.min_y:
             pos_y = self.height / 2
         else:
-            pos_y = self.offset_y + (y - self.min_y) * self.scale
+            pos_y = self.offset_y + (self.max_y - y) * self.scale
         return pos_x, pos_y
 
     def contract_name(self, name: str) -> str:
