@@ -1,10 +1,10 @@
-from parser.errors import Colors
-from .map import Map, Hub, ZoneType
+from errors import Colors
+from map import Map, Hub, ZoneType
 from typing import Any
 
 
 class PathfindingError(Exception):
-    """Exception raised when no path is found in the map."""
+    """Raised when no path is found in the map."""
 
     def __init__(self, message: str) -> None:
         """Initialize the exception with an error message.
@@ -27,7 +27,7 @@ class PathfindingError(Exception):
 
 
 class Pathfinding():
-    """Implements the modified Dijkstra algorithm to find the optimal path.
+    """Implement a modified Dijkstra algorithm to find the optimal path.
 
     Takes zone types (normal, priority, restricted, blocked) into account,
     which affect the path cost.
@@ -104,7 +104,7 @@ class Pathfinding():
             if self.zone[actual_hub] + 0.5 < self.zone[hub_to]:
                 return self.zone[actual_hub] + 0.5
         elif hub_to.zone_type == ZoneType.RESTRICTED:
-            if self.zone[actual_hub] + 2 < self.zone[hub_to]:
+            if self.zone[actual_hub] + 1 < self.zone[hub_to]:
                 return self.zone[actual_hub] + 2
         return
 

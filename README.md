@@ -15,7 +15,6 @@ make install       # uv sync — creates the venv and installs dependencies
 make run             # uv run src/main.py — runs the simulation on a map
 make debug           # runs the main script under pdb
 make lint            # flake8 + mypy (standard flags)
-make lint-strict      # flake8 + mypy --strict
 make clean            # removes __pycache__ and .mypy_cache
 ```
 

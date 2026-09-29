@@ -1,4 +1,5 @@
-from engine import Connection, Simulation, Map
+from map import Connection, Map
+from simulation import Simulation
 from math import sqrt
 from typing import Tuple
 import pygame
@@ -44,9 +45,8 @@ class Visualizer():
     def create_window(self, movement_history: dict) -> None:
         """Create and run the Pygame window to display the simulation.
 
-        Initializes window settings, draws the map,
-         and runs the main event loop.
-        Stops automatically after the last lap in movement_history.
+        Initializes window settings, draws the map, and runs the main event
+        loop. Stops automatically after the last lap in movement_history.
         """
         self.define_window_values()
         self.movement_history = movement_history
@@ -174,9 +174,7 @@ class Visualizer():
             size: int,
             pos: Tuple[float, float]
     ) -> None:
-        """Render and blit a text string at the
-         given position and font size.
-        """
+        """Render and blit text string at position with font size."""
         font = pygame.font.SysFont(None, size)
         show_text = font.render(text, True, Color.rgb['white'])
         self.screen.blit(show_text, pos)
@@ -200,8 +198,8 @@ class Visualizer():
         self.screen.blit(self.image[self.idx], (0, 0))
 
     def draw_map(self) -> None:
-        """Prepare images and draw the static
-         map (connections, hubs, drones).
+        """
+        Prepare images and draw the static map (connections, hubs, drones).
         """
         self.create_images()
         self.screen.fill((30, 30, 30))
@@ -222,8 +220,8 @@ class Visualizer():
         return pos_x, pos_y
 
     def contract_name(self, name: str) -> str:
-        """Shorten hub names for display
-         (first letter + digits, uppercased).
+        """
+        Shorten hub names for display (first letter + digits, uppercased).
         """
         character = list(name[0])
         if len(name) > 2:
@@ -232,9 +230,7 @@ class Visualizer():
         return ''.join(character).upper()
 
     def draw_hub(self) -> None:
-        """Draw all hubs as colored circles with
-         shortened names on the background.
-        """
+        """Draw all hubs as colored circles with shortened names."""
         h_text = pygame.font.SysFont(None, 16)
         for hub in self.map.hubs.values():
             pos_x, pos_y = self.pixel_pos(hub.pos_x, hub.pos_y)
@@ -351,7 +347,7 @@ class Visualizer():
             time.sleep(0.05)
 
     def wich_key(self, key: pygame.event.Event) -> None:
-        """Handle individual key presses: Escape to quit, Left/Right to step laps.
+        """Handle individual key presses: Escape, Left/Right to step laps.
 
         Bounds-checks the current lap index before changing images.
         """

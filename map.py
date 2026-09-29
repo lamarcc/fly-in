@@ -3,7 +3,7 @@ from typing import Tuple, Any
 
 
 class Map():
-    """Represents the structure of a simulation map.
+    """The structure of a simulation map.
 
     Contains all hubs (nodes) and connections (edges) that make up the network
     through which drones must travel.
@@ -19,7 +19,7 @@ class Map():
 
 
 class Hub():
-    """Represents a node (hub) in the simulation map.
+    """A node (hub) in the simulation map.
 
     A hub has a position, capacity, zone type, and connections to other hubs.
     """
@@ -80,7 +80,7 @@ class Hub():
         return (hub in self.connected_to)
 
     def get_this_connection(self, hub: Hub) -> Any:
-        """Retrieve the Connection object linking this hub to another.
+        """Retrieve the connection object linking this hub to another.
 
         Args:
             hub: The destination hub.
@@ -95,7 +95,7 @@ class Hub():
 
 
 class Connection():
-    """Represents a connection (edge) between two hubs.
+    """A connection (edge) between two hubs.
 
     Tracks the connection capacity and the number of drones crossing it.
     """

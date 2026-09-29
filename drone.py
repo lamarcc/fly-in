@@ -1,9 +1,9 @@
-from .map import Map, Hub, Connection
+from map import Map, Hub, Connection
 from typing import Any
 
 
 class Drone():
-    """Represents a drone moving through the simulation.
+    """A drone moving through the simulation.
 
     Each drone follows a predefined path from the start hub to the end hub,
     taking into account the capacities of hubs and connections.
@@ -27,10 +27,9 @@ class Drone():
     def move_to(self) -> None:
         """Perform the drone's movement to the next position.
 
-        Handles capacity rules and the different zone types.
-        If the drone cannot move forward (insufficient capacity),
-         it stays in place
-        and increments the waiting counter.
+        Handles capacity rules and different zone types. If the drone cannot
+        move forward (insufficient capacity), it stays in place and increments
+        the waiting counter.
         """
         if self.pos == self.map.end_hub:
             return
@@ -63,8 +62,8 @@ class Drone():
     def move(self, destination: Hub | Connection) -> None:
         """Move the drone to a destination.
 
-        Updates the occupation of the current hub and of the destination,
-        then removes the destination from the path if it is a hub.
+        Updates the occupation of the current and destination hubs, then
+        removes the destination from the path if it is a hub.
 
         Args:
             destination: The destination hub or connection.
@@ -76,15 +75,16 @@ class Drone():
             return
         self.path.remove(self.pos)
 
-    def check_connection_capacity(self, destination: Hub | Connection) -> Any:
-        """Check whether the connection to the destination can accept the drone.
+    def check_connection_capacity(
+        self, destination: Hub | Connection
+    ) -> Any:
+        """Check connection to destination can accept the drone.
 
         Args:
             destination: The hub the drone wants to move toward.
 
         Returns:
-            bool: True if the connection has available capacity,
-             otherwise False.
+            bool: True if connection has available capacity, else False.
         """
         if self.pos.is_connected_to(destination):
             connection = self.pos.get_this_connection(destination)

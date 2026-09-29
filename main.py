@@ -1,8 +1,9 @@
 if __name__ == "__main__":
     try:
-        from engine import Simulation, PathfindingError
-        from parser import ParsingError, SimulationStop, MapFileError
+        from errors import ParsingError, SimulationStop, MapFileError
         from map_chooser import MapMenu, EmptyMapFolder
+        from simulation import Simulation
+        from pathfinding import PathfindingError
         import os
         map = MapMenu()
         run = Simulation()

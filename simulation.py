@@ -1,11 +1,13 @@
 from __future__ import annotations
-from parser import Parse
+from map import Hub, Connection, Map
+from parsing import Parse
+from drone import Drone
+from pathfinding import Pathfinding
 from typing import Any
-import engine
 
 
 class Simulation():
-    """Manages the full execution of the drone simulation.
+    """Manage the full execution of the drone simulation.
 
     Coordinates parsing, initialization, movement simulation,
     and visualization of the results.
@@ -13,10 +15,12 @@ class Simulation():
 
     def __init__(self) -> None:
         """Initialize a new simulation with its components."""
-        import render
-        self.map: engine.Map = engine.Map()
+        import visualizer
+        self.map: Map = Map()
         self.parser: Parse = Parse()
-        self.visualizer: render.Visualizer = render.Visualizer(self.map, self)
+        self.visualizer: visualizer.Visualizer = (
+            visualizer.Visualizer(self.map, self)
+        )
         self.is_running: bool = False
         self.drones: list = []
         self.drones_finished: list = []
@@ -29,7 +33,7 @@ class Simulation():
             path: The path all drones must follow.
         """
         for i in range(1, self.map.nb_drones + 1):
-            drone = engine.Drone(i, self.map, path)
+            drone = Drone(i, self.map, path)
             self.drones.append(drone)
 
     def init_hubs(self, data: Any) -> None:
@@ -41,14 +45,14 @@ class Simulation():
         Args:
             data: List of intermediate hubs parsed from the file.
         """
-        self.map.start_hub = engine.Hub(
+        self.map.start_hub = Hub(
             self.map,
             self.parser.start_hub["name"],
             self.parser.start_hub["pos_x"],
             self.parser.start_hub["pos_y"],
             self.parser.start_hub["metadata"]
         )
-        self.map.end_hub = engine.Hub(
+        self.map.end_hub = Hub(
             self.map,
             self.parser.end_hub["name"],
             self.parser.end_hub["pos_x"],
@@ -59,7 +63,7 @@ class Simulation():
         self.parser.hubs.remove(self.parser.end_hub)
         self.map.hubs[self.parser.start_hub["name"]] = self.map.start_hub
         for info in data:
-            hub = engine.Hub(
+            hub = Hub(
                 self.map,
                 info["name"],
                 info["pos_x"],
@@ -79,7 +83,7 @@ class Simulation():
             hub_a = self.map.hubs[info['hub_a']]
             hub_b = self.map.hubs[info['hub_b']]
             name = f'{hub_a.name}-{hub_b.name}'
-            connection = engine.Connection(
+            connection = Connection(
                 name,
                 hub_a,
                 hub_b,
@@ -158,7 +162,7 @@ class Simulation():
     def run(self) -> None:
         """Run the full simulation: pathfinding, initialization, and execution.
         """
-        pathfinder = engine.Pathfinding(self.map)
+        pathfinder = Pathfinding(self.map)
         path = pathfinder.find_path()
         self.init_drones(path)
         self.flyin(path)

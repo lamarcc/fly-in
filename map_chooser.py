@@ -1,11 +1,11 @@
 from pick import pick
 from pathlib import Path
-from parser.errors import Colors
+from errors import Colors
 from typing import Any
 
 
 class EmptyMapFolder(Exception):
-    """Exception raised when the map folder is empty."""
+    """Raised when the map folder is empty."""
 
     def __init__(self) -> None:
         """Initialize the exception with a formatted message."""
@@ -22,7 +22,7 @@ class EmptyMapFolder(Exception):
 
 
 class MapMenu():
-    """Manager for interactive selection of map files.
+    """Manage interactive selection of map files.
 
     Allows the user to browse the map directory and select a specific map file.
     """
@@ -34,8 +34,8 @@ class MapMenu():
     def choose(self) -> Path:
         """Display an interactive menu to select a map.
 
-        Lets the user navigate through directories or directly
-         select a map file (.txt).
+        Lets the user navigate through directories or directly select a map
+        file (.txt).
 
         Returns:
             Path: The absolute path of the selected map file.

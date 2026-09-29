@@ -1,6 +1,6 @@
 from __future__ import annotations
 from typing import Any
-from . import errors
+import errors
 import sys
 
 
@@ -17,10 +17,12 @@ class Color():
 
 
 class Parse():
-    """Allowed color names for hubs and metadata."""
+    """Parse map configuration files."""
+
     def __init__(self) -> None:
-        """Initialize parser state and storage for hubs,
-         connections, and errors.
+        """Initialize parser state and storage.
+
+        Stores hubs, connections, and errors during parsing.
         """
         self.nb_drones: Any = None
         self.nb_drones_check: int = 0
@@ -34,12 +36,14 @@ class Parse():
         self.err: list = []
 
     def parse(self, file: str) -> None:
-        """Read and parse a map file line by line,
-         collecting hubs, connections, and errors.
+        """Read and parse a map file line by line.
 
-        Raises FileNotFoundError or PermissionError if
-         the file cannot be opened.
-        Raises ParsingError if any validation errors were collected.
+        Collects hubs, connections, and errors.
+
+        Raises:
+            FileNotFoundError: If the file cannot be found.
+            PermissionError: If the file cannot be opened.
+            ParsingError: If any validation errors were collected.
         """
         try:
             f = open(file)
@@ -81,10 +85,10 @@ class Parse():
             sys.exit(0)
 
     def check_line(self, key: str, info: str) -> None:
-        """Validate line structure and field count for 'hub' and 'connection' entries.
+        """Validate line structure and field count for 'hub' and 'connection'.
 
-        Appends an InvalidLineError to self.err
-         if the line has too many fields.
+        Appends an InvalidLineError to self.err if the line has too many
+        fields.
         """
         m_start = info.find("[")
         m_end = info.find("]")
@@ -110,8 +114,8 @@ class Parse():
         """Dispatch parsing logic based on the configuration key.
 
         Handles nb_drones, start_hub, end_hub, hub, and connection keys.
-        Raises or records errors for duplicates,
-         invalid values, or unknown keys.
+        Raises or records errors for duplicates, invalid values, or
+        unknown keys.
         """
         if key == "nb_drones":
             try:
@@ -124,8 +128,8 @@ class Parse():
                     self.nb_drones = int(info)
                     if self.nb_drones > 50:
                         print(errors.MapFileError.warning(
-                            self.nb_line, "For performance's issues, "
-                            "the <nb_drones> value has capped at 50"
+                            self.nb_line, "For performance reason, "
+                            "the <nb_drones> value has been capped at 50"
                         ))
                         self.nb_drones = 50
                     self.nb_drones_check = 1
@@ -208,9 +212,10 @@ class Parse():
             )
 
     def parse_hub(self, line: str) -> dict:
-        """Parse a hub definition line into a dict with name, position, and metadata.
+        """Parse a hub definition line into a dict.
 
-        Supports optional metadata in brackets; applies defaults if missing.
+        Extracts name, position, and metadata. Supports optional metadata in
+        brackets; applies defaults if missing.
         """
         default_info = {
             "name": "undefined",
@@ -266,17 +271,18 @@ class Parse():
             info_metadata: str,
             default_metadata: dict
     ) -> dict:
-        """Parse optional hub metadata (zone, color, max_drones)
-         from a bracketed string.
+        """Parse optional hub metadata (zone, color, max_drones).
 
-        Applies defaults, validates allowed values,
-         and records errors for bad formats.
+        Extracts metadata from a bracketed string. Applies defaults, validates
+        allowed values, and records errors for bad formats.
         """
         m_start = info_metadata.find("[")
         m_end = info_metadata.find("]")
-        info: list = [i.split("=") for i in info_metadata[m_start + 1:m_end].split()]
+        info: list = [
+            i.split("=")
+            for i in info_metadata[m_start + 1:m_end].split()
+        ]
         verif_format: list
-        print(info)
         for verif_format in info:
             if len(verif_format) == 1:
                 verif_format.append("undefined")
@@ -346,10 +352,10 @@ class Parse():
         return new_metadata
 
     def parse_connection(self, line: str) -> dict:
-        """Parse a connection definition (hubA-hubB) with optional metadata.
+        """Parse connection definition (hubA-hubB) with optional metadata.
 
-        Returns a dict with keys: hub_a, hub_b, and metadata.
-        Records errors for invalid formats, unknown metadata, or bad values.
+        Returns dict with keys: hub_a, hub_b, and metadata. Records
+        errors for invalid formats, unknown metadata, or bad values.
         """
         default_metadata = {
             "max_link_capacity": 1
@@ -412,9 +418,13 @@ class Parse():
             except ValueError:
                 self.err.append(errors.ConnectionError(
                     self.nb_line,
-                    "Value need to be an integer for 'max_link_capacity'"
+                    "Value need to be an integer for <max_link_capacity>"
                 ))
-            return {"hub_a": link[0], "hub_b": link[1], "metadata": metadata}
+            return {
+                "hub_a": link[0],
+                "hub_b": link[1],
+                "metadata": {**default_metadata, **metadata}
+            }
         else:
             link = line.strip().split("-")
             if len(link) != 2 or "" in link:

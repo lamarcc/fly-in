@@ -44,12 +44,11 @@ class Error(Exception):
 
 
 class ParsingError(Exception):
-    """Exception raised when there are parsing errors in the file."""
-    pass
+    """Raised when parsing errors are found in the file."""
 
 
 class MapFileError(Exception):
-    """Exception raised when a map file parsing error occurs."""
+    """Raised when a map file parsing error occurs."""
 
     def __init__(self, line: int) -> None:
         """Initialize the exception with the error line number.
@@ -109,7 +108,7 @@ class MapFileError(Exception):
 
 
 class HubError(MapFileError):
-    """Exception raised when a hub definition is invalid."""
+    """Raised when a hub definition is invalid."""
 
     def __init__(self, line: int, message: str) -> None:
         """Initialize the exception with the line number and message.
@@ -128,7 +127,7 @@ class HubError(MapFileError):
 
 
 class MetadataError(MapFileError):
-    """Exception raised when metadata is invalid."""
+    """Raised when metadata is invalid."""
 
     def __init__(self, line: int, message: str) -> None:
         """Initialize the exception with the line number and message.
@@ -147,7 +146,7 @@ class MetadataError(MapFileError):
 
 
 class InvalidKeyError(MapFileError):
-    """Exception raised when an invalid key is found in the file."""
+    """Raised when an invalid key is found in the file."""
 
     def __init__(self, line: int, key: str) -> None:
         """Initialize the exception with the line number and invalid key.
@@ -169,7 +168,7 @@ class InvalidKeyError(MapFileError):
 
 
 class InvalidLineError(MapFileError):
-    """Exception raised when a line contains too many arguments."""
+    """Raised when a line contains too many arguments."""
 
     def __init__(self, line: int) -> None:
         """Initialize the exception with the line number.
@@ -182,11 +181,11 @@ class InvalidLineError(MapFileError):
     def __str__(self) -> Any:
         """Return the formatted error message."""
         error = super().__str__()
-        return error + "Too much arguments"
+        return error + "Too many arguments"
 
 
 class InvalidValue(MapFileError):
-    """Exception raised when a value is invalid."""
+    """Raised when a value is invalid."""
 
     def __init__(self, line: int, message: str) -> None:
         """Initialize the exception with the line number and message.
@@ -205,7 +204,7 @@ class InvalidValue(MapFileError):
 
 
 class DoublonError(MapFileError):
-    """Exception raised when an element is defined twice."""
+    """Raised when an element is defined twice."""
 
     def __init__(self, line: int, key: str) -> None:
         """Initialize the exception with the line number and duplicate key.
@@ -224,7 +223,7 @@ class DoublonError(MapFileError):
 
 
 class ConnectionError(MapFileError):
-    """Exception raised when a connection definition is invalid."""
+    """Raised when a connection definition is invalid."""
 
     def __init__(self, line: int, message: str) -> None:
         """Initialize the exception with the line number and message.
@@ -243,7 +242,7 @@ class ConnectionError(MapFileError):
 
 
 class SimulationStop(Exception):
-    """Exception raised when the user stops the simulation (Ctrl+C)."""
+    """Raised when the user stops the simulation (Ctrl+C)."""
 
     def __init__(self) -> None:
         """Initialize the exception with a formatted message."""
